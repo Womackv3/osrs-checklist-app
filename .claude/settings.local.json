@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(start index.html)",
+      "WebFetch(domain:oldschool.runescape.wiki)",
+      "WebSearch",
+      "Bash(python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
