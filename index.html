@@ -3033,6 +3033,45 @@
             font-weight: 500;
             margin-top: 15px;
         }
+
+        .group-player-not-found {
+            background: rgba(244, 228, 188, 0.5);
+            border: 2px solid #8b4513;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .not-found-message {
+            background: rgba(210, 105, 30, 0.1);
+            border: 2px solid #d2691e;
+            padding: 30px;
+            border-radius: 12px;
+            color: #d2691e;
+        }
+
+        .not-found-message .player-name-header {
+            font-family: 'Cinzel', serif;
+            font-size: 1.4em;
+            margin: 0 0 10px 0;
+            color: #2e1a0a;
+            font-weight: 600;
+        }
+
+        .not-found-message .player-total-level {
+            font-size: 1.1em;
+            margin: 0 0 20px 0;
+            color: #5d4037;
+            font-weight: 500;
+        }
+
+        .not-found-message .not-found-text {
+            font-size: 1.1em;
+            margin: 0;
+            color: #d2691e;
+            font-weight: 500;
+        }
         
         /* Group Iron Stats now use the same .stats-grid and .stat-item classes as Player Stats */
         
@@ -3483,6 +3522,7 @@
                             <!-- Group members will be populated here -->
                             <div id="group-members" class="group-members"></div>
                         </div>
+
                         
                         <!-- Loading state -->
                         <div id="group-loading" class="loading-state" style="display: none;">
@@ -5445,14 +5485,29 @@ if (typeof module !== 'undefined' && module.exports) {
             
             // Check if member is not on hiscores
             if (member.notOnHiscores) {
-                // Create a clean card with just name and message
-                memberCard.appendChild(memberHeaderDiv);
+                // Use the new group-player-not-found styling
+                memberCard.className = 'group-player-not-found';
                 
-                // Add the not found message in a dedicated section
-                const notFoundDiv = document.createElement('div');
-                notFoundDiv.className = 'member-not-found';
-                notFoundDiv.textContent = 'Not high enough level to be viewed on the leaderboard';
-                memberCard.appendChild(notFoundDiv);
+                // Create the not found message structure
+                const notFoundMessage = document.createElement('div');
+                notFoundMessage.className = 'not-found-message';
+                
+                const playerNameHeader = document.createElement('h3');
+                playerNameHeader.className = 'player-name-header';
+                playerNameHeader.textContent = member.name;
+                
+                const playerTotalLevel = document.createElement('p');
+                playerTotalLevel.className = 'player-total-level';
+                playerTotalLevel.textContent = `Total Level: ${member.totalLevel}`;
+                
+                const notFoundText = document.createElement('p');
+                notFoundText.className = 'not-found-text';
+                notFoundText.textContent = 'Not high enough level to be viewed on the leaderboard';
+                
+                notFoundMessage.appendChild(playerNameHeader);
+                notFoundMessage.appendChild(playerTotalLevel);
+                notFoundMessage.appendChild(notFoundText);
+                memberCard.appendChild(notFoundMessage);
                 
                 return memberCard; // Return early, don't show stats
             }
