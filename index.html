@@ -4988,7 +4988,51 @@ if (typeof module !== 'undefined' && module.exports) {
             }
         }
 
-        // Group Iron Stats API Functions
+        // Group Iron Stats API Functions - New Direct Page Scraping Approach
+        
+        /**
+         * Parse the group ironman page HTML to extract all member data directly
+         */
+        function parseGroupIronDataFromPage(htmlContent, groupName) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            
+            const members = [];
+            
+            // Look for member data in the HTML structure
+            // The group page contains member names, total levels, and individual skill data
+            const memberElements = doc.querySelectorAll('.personal-hiscores__table tbody tr, .group-member, .player-info');
+            
+            if (memberElements.length === 0) {
+                // Try alternative selectors if the above don't work
+                const textContent = doc.body.textContent || doc.body.innerText || '';
+                
+                // Extract member info using regex patterns for the group page
+                const memberMatches = textContent.match(/(\w+(?:\s+\w+)*)\s+(\d+)\s+(\d{1,3}(?:,\d{3})*)/g);
+                
+                if (memberMatches) {
+                    memberMatches.forEach(match => {
+                        const parts = match.match(/^(.+?)\s+(\d+)\s+(\d{1,3}(?:,\d{3})*)$/);
+                        if (parts) {
+                            const [, name, totalLevel, totalXp] = parts;
+                            members.push({
+                                name: name.trim(),
+                                originalName: name.trim(),
+                                totalLevel: parseInt(totalLevel),
+                                totalXp: parseInt(totalXp.replace(/,/g, '')),
+                                skills: null,
+                                fromGroupPage: true
+                            });
+                        }
+                    });
+                }
+            }
+            
+            console.log(`Parsed ${members.length} members from group page`);
+            return { members };
+        }
+
+        // Group Iron Stats API Functions - Original Individual API Call Approach
         // Helper function to safely extract XP values (handles both numbers and strings)
         function getSkillXp(skill) {
             if (typeof skill.xp === 'number') {
@@ -5006,10 +5050,26 @@ if (typeof module !== 'undefined' && module.exports) {
                 
                 // Use CORS proxy for API access (same approach as lookupPlayer)
                 const htmlContent = await fetchGroupDataWithProxy(groupName);
-                const groupData = parseGroupIronData(htmlContent, groupName);
+                
+                // Try new direct parsing approach first
+                const groupData = parseGroupIronDataFromPage(htmlContent, groupName);
+                
+                // If we got members from the new parser, return them immediately
+                if (groupData.members && groupData.members.length > 0) {
+                    console.log(`✅ Successfully parsed ${groupData.members.length} members from group page directly`);
+                    return {
+                        name: groupName,
+                        members: groupData.members,
+                        lastUpdated: new Date().toISOString()
+                    };
+                }
+                
+                // Fallback to old parsing method if new one didn't work
+                console.log('⚠️ Direct parsing failed, falling back to individual API calls...');
+                const fallbackGroupData = parseGroupIronData(htmlContent, groupName);
                 
                 // Fetch individual player stats for each member
-                console.log(`Fetching individual stats for ${groupData.members.length} members...`);
+                console.log(`Fetching individual stats for ${fallbackGroupData.members.length} members...`);
                 
                 // Update loading message
                 const errorDiv = document.getElementById('group-error');
@@ -5018,17 +5078,17 @@ if (typeof module !== 'undefined' && module.exports) {
                     loadingDiv.innerHTML = `
                         <div class="loading-spinner"></div>
                         <p>Loading group information...</p>
-                        <p style="font-size: 0.9em; color: #666;">Fetching individual stats for ${groupData.members.length} members...</p>
+                        <p style="font-size: 0.9em; color: #666;">Fetching individual stats for ${fallbackGroupData.members.length} members...</p>
                     `;
                 }
                 
                 // Process members sequentially (one at a time) to reduce proxy load
                 const membersWithStats = [];
-                for (let index = 0; index < groupData.members.length; index++) {
-                    const member = groupData.members[index];
+                for (let index = 0; index < fallbackGroupData.members.length; index++) {
+                    const member = fallbackGroupData.members[index];
                     
                     try {
-                        console.log(`Fetching stats for ${member.name}... (${index + 1}/${groupData.members.length})`);
+                        console.log(`Fetching stats for ${member.name}... (${index + 1}/${fallbackGroupData.members.length})`);
                         
                         // Clean the player name before API call (convert diamond characters and spaces to underscores)
                         const cleanName = member.originalName
@@ -5485,8 +5545,8 @@ if (typeof module !== 'undefined' && module.exports) {
             memberHeaderDiv.appendChild(memberNameDiv);
             memberHeaderDiv.appendChild(memberTotalDiv);
             
-            // Check if member is not on hiscores
-            if (member.notOnHiscores) {
+            // Check if member is not on hiscores OR if we only have group page data (no individual skills)
+            if (member.notOnHiscores || member.fromGroupPage) {
                 // Use the new group-player-not-found styling
                 memberCard.className = 'group-player-not-found';
                 
@@ -5504,7 +5564,14 @@ if (typeof module !== 'undefined' && module.exports) {
                 
                 const notFoundText = document.createElement('p');
                 notFoundText.className = 'not-found-text';
-                notFoundText.textContent = 'Not high enough level to be viewed on the leaderboard';
+                
+                if (member.notOnHiscores) {
+                    notFoundText.textContent = 'Not high enough level to be viewed on the leaderboard';
+                } else if (member.fromGroupPage) {
+                    notFoundText.textContent = 'Individual skill data not available - showing group page data only';
+                } else {
+                    notFoundText.textContent = 'Stats unavailable';
+                }
                 
                 notFoundMessage.appendChild(playerNameHeader);
                 notFoundMessage.appendChild(playerTotalLevel);
