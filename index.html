@@ -247,6 +247,10 @@
                 currentPlayerName = username;
                 currentPlayerStats = stats;
                 
+                // Update global window references
+                window.currentPlayerName = username;
+                window.currentPlayerStats = stats;
+                
                 // Save to localStorage as backup
                 localStorage.setItem('osrs_player_name', username);
                 localStorage.setItem('osrs_player_stats', JSON.stringify(stats));
@@ -453,6 +457,10 @@
                     await updateStatsDisplay(stats, savedName);
                     currentPlayerName = savedName;
                     currentPlayerStats = stats;
+                    
+                    // Update global window references
+                    window.currentPlayerName = savedName;
+                    window.currentPlayerStats = stats;
                 } else {
                     console.log('No saved player stats found - use "Lookup Player" to load your stats');
                 }
@@ -566,6 +574,10 @@
                         updateStatsDisplay(data.stats.stats, data.stats.username);
                         currentPlayerName = data.stats.username;
                         currentPlayerStats = data.stats.stats;
+                        
+                        // Update global window references
+                        window.currentPlayerName = data.stats.username;
+                        window.currentPlayerStats = data.stats.stats;
                     }
                 }
             });
@@ -633,7 +645,9 @@
         window.migrateToFirestore = migrateToFirestore;
         window.loadFromFirestore = loadFromFirestore;
         
-        // Stats management functions
+        // Stats management functions and variables
+        window.currentPlayerName = currentPlayerName;
+        window.currentPlayerStats = currentPlayerStats;
         window.lookupPlayer = lookupPlayer;
         window.fetchPlayerDataWithProxy = fetchPlayerDataWithProxy;
         window.parseHiscoresData = parseHiscoresData;
@@ -2263,6 +2277,32 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+        
+        #runelite-sync-btn {
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+            color: #f4e4bc;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: 'MedievalSharp', serif;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+        
+        #runelite-sync-btn:hover {
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        #runelite-sync-btn:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+            transform: none;
+        }
 
 
         /* Achievement Diaries Styles */
@@ -3338,6 +3378,7 @@
                         <div class="lookup-section">
                             <input type="text" id="username-input" placeholder="Enter OSRS username" />
                             <button id="lookup-btn" onclick="lookupPlayer()">Lookup Player</button>
+                            <button id="runelite-sync-btn" onclick="triggerRuneLiteSync()" title="Sync quest and diary progress from RuneLite">Sync RuneLite</button>
                         </div>
                         
                         <div class="stats-grid">
@@ -7764,6 +7805,169 @@ if (typeof module !== 'undefined' && module.exports) {
                 return false;
             }
         };
+
+        // ========== RUNELITE WEBHOOK INTEGRATION ==========
+        
+        /**
+         * Sync quest progress from RuneLite webhook data
+         */
+        async function syncRuneLiteQuestProgress(playerName) {
+            try {
+                const response = await fetch(`/api/runelite-webhook?player=${encodeURIComponent(playerName)}&type=quest`);
+                const data = await response.json();
+                
+                if (data.data && data.data.length > 0) {
+                    console.log(`Found ${data.data.length} quest completions from RuneLite for ${playerName}`);
+                    
+                    // Update quest progress in the UI
+                    data.data.forEach(questData => {
+                        updateQuestProgressFromWebhook(questData);
+                    });
+                    
+                    return data.data;
+                }
+                return [];
+            } catch (error) {
+                console.error('Error syncing RuneLite quest progress:', error);
+                return [];
+            }
+        }
+        
+        /**
+         * Sync diary progress from RuneLite webhook data
+         */
+        async function syncRuneLiteDiaryProgress(playerName) {
+            try {
+                const response = await fetch(`/api/runelite-webhook?player=${encodeURIComponent(playerName)}&type=diary`);
+                const data = await response.json();
+                
+                if (data.data && data.data.length > 0) {
+                    console.log(`Found ${data.data.length} diary completions from RuneLite for ${playerName}`);
+                    
+                    // Update diary progress in the UI
+                    data.data.forEach(diaryData => {
+                        updateDiaryProgressFromWebhook(diaryData);
+                    });
+                    
+                    return data.data;
+                }
+                return [];
+            } catch (error) {
+                console.error('Error syncing RuneLite diary progress:', error);
+                return [];
+            }
+        }
+        
+        /**
+         * Update quest progress based on webhook data
+         */
+        function updateQuestProgressFromWebhook(questData) {
+            // Find quest element by name and mark as completed
+            const questElements = document.querySelectorAll('.quest-item');
+            questElements.forEach(element => {
+                const questName = element.querySelector('.quest-name')?.textContent;
+                if (questName && questName.toLowerCase().includes(questData.questName.toLowerCase())) {
+                    const checkbox = element.querySelector('input[type="checkbox"]');
+                    if (checkbox && !checkbox.checked) {
+                        checkbox.checked = true;
+                        element.classList.add('completed');
+                        
+                        // Save selection to database
+                        const questId = checkbox.getAttribute('data-quest-id') || questData.questName;
+                        saveGoalSelection(questId, true);
+                        
+                        console.log(`✅ Quest completed via RuneLite: ${questData.questName}`);
+                    }
+                }
+            });
+        }
+        
+        /**
+         * Update diary progress based on webhook data
+         */
+        function updateDiaryProgressFromWebhook(diaryData) {
+            // Find diary task element and mark as completed
+            const diaryElements = document.querySelectorAll('.diary-task');
+            diaryElements.forEach(element => {
+                const taskText = element.textContent;
+                if (taskText && taskText.toLowerCase().includes(diaryData.taskName.toLowerCase())) {
+                    const checkbox = element.querySelector('input[type="checkbox"]');
+                    if (checkbox && !checkbox.checked) {
+                        checkbox.checked = true;
+                        element.classList.add('completed');
+                        
+                        // Save selection to database
+                        const taskId = checkbox.getAttribute('data-task-id') || diaryData.taskName;
+                        saveGoalSelection(taskId, true);
+                        
+                        console.log(`✅ Diary task completed via RuneLite: ${diaryData.diaryName} - ${diaryData.taskName}`);
+                    }
+                }
+            });
+        }
+        
+        /**
+         * Auto-sync RuneLite progress for current player
+         */
+        async function autoSyncRuneLiteProgress() {
+            if (window.currentPlayerName) {
+                console.log(`🔄 Auto-syncing RuneLite progress for ${window.currentPlayerName}...`);
+                await syncRuneLiteQuestProgress(window.currentPlayerName);
+                await syncRuneLiteDiaryProgress(window.currentPlayerName);
+            }
+        }
+        
+        /**
+         * Manually trigger RuneLite sync
+         */
+        async function triggerRuneLiteSync() {
+            const playerName = window.currentPlayerName || document.getElementById('username-input')?.value?.trim();
+            if (!playerName) {
+                alert('Please enter a player name or lookup player stats first');
+                return;
+            }
+            
+            const button = document.getElementById('runelite-sync-btn');
+            if (button) {
+                button.textContent = 'Syncing...';
+                button.disabled = true;
+            }
+            
+            try {
+                const questData = await syncRuneLiteQuestProgress(playerName);
+                const diaryData = await syncRuneLiteDiaryProgress(playerName);
+                
+                const totalSynced = questData.length + diaryData.length;
+                if (totalSynced > 0) {
+                    alert(`✅ Synced ${totalSynced} completions from RuneLite (${questData.length} quests, ${diaryData.length} diary tasks)`);
+                } else {
+                    alert('ℹ️ No new completions found in RuneLite data');
+                }
+            } catch (error) {
+                alert(`❌ Error syncing RuneLite data: ${error.message}`);
+            } finally {
+                if (button) {
+                    button.textContent = 'Sync RuneLite';
+                    button.disabled = false;
+                }
+            }
+        }
+        
+        // Auto-sync on player lookup
+        const originalLookupPlayer = window.lookupPlayer;
+        window.lookupPlayer = async function() {
+            await originalLookupPlayer();
+            // Auto-sync after successful player lookup
+            setTimeout(autoSyncRuneLiteProgress, 1000);
+        };
+        
+        // Make RuneLite functions globally available
+        window.syncRuneLiteQuestProgress = syncRuneLiteQuestProgress;
+        window.syncRuneLiteDiaryProgress = syncRuneLiteDiaryProgress;
+        window.triggerRuneLiteSync = triggerRuneLiteSync;
+        window.autoSyncRuneLiteProgress = autoSyncRuneLiteProgress;
+        
+        console.log('✅ RuneLite webhook integration initialized');
     </script>
 
     <!-- Add to To-Do List Modal -->
