@@ -297,6 +297,12 @@
                     
                     if (!response.ok) {
                         console.log(`Proxy ${i + 1} failed with status: ${response.status}`);
+                        
+                        // Handle 404 specifically - player not found on hiscores
+                        if (response.status === 404) {
+                            throw new Error('PLAYER_NOT_FOUND');
+                        }
+                        
                         continue;
                     }
                     
@@ -336,14 +342,35 @@
             skillNames.forEach((skill, index) => {
                 if (lines[index]) {
                     const parts = lines[index].split(',');
-                    const rank = parseInt(parts[0]) || -1;
-                    const level = parseInt(parts[1]) || 1;
-                    const xp = parseInt(parts[2]) || 0;
+                    
+                    // Parse values with proper validation - avoid -1 ranks becoming levels
+                    let rank = parseInt(parts[0]);
+                    let level = parseInt(parts[1]);
+                    let xp = parseInt(parts[2]);
+                    
+                    // Handle unranked players (rank = -1) properly
+                    if (isNaN(rank) || rank < 1) rank = -1;
+                    if (isNaN(level) || level < 1) level = 1;
+                    if (isNaN(xp) || xp < 0) xp = 0;
+                    
+                    // For skills with -1 rank, ensure level is still valid
+                    if (rank === -1 && level === 1 && xp === 0) {
+                        // This might be a skill that hasn't been trained yet
+                        level = 1;
+                        xp = 0;
+                    }
                     
                     stats[skill] = {
                         rank: rank,
                         level: level,
                         xp: xp
+                    };
+                } else {
+                    // If line is missing, provide default values
+                    stats[skill] = {
+                        rank: -1,
+                        level: 1,
+                        xp: 0
                     };
                 }
             });
@@ -5015,20 +5042,38 @@ if (typeof module !== 'undefined' && module.exports) {
                     } catch (error) {
                         console.warn(`Failed to fetch stats for ${member.name}:`, error.message);
                         
-                        // Show temporary message about proxy issues
-                        if (loadingDiv) {
-                            loadingDiv.innerHTML = `
-                                <div class="loading-spinner"></div>
-                                <p>Proxy services temporarily unavailable</p>
-                                <p style="font-size: 0.9em; color: #666;">Using approximated data for ${member.name}... (${index + 1}/${groupData.members.length})</p>
-                            `;
+                        // Handle different error types
+                        if (error.message === 'PLAYER_NOT_FOUND') {
+                            // Player not found on hiscores - show message instead of stats
+                            membersWithStats.push({
+                                ...member,
+                                notOnHiscores: true,
+                                skills: null
+                            });
+                            
+                            if (loadingDiv) {
+                                loadingDiv.innerHTML = `
+                                    <div class="loading-spinner"></div>
+                                    <p>Loading group information...</p>
+                                    <p style="font-size: 0.9em; color: #666;">${member.name} not found on hiscores... (${index + 1}/${groupData.members.length})</p>
+                                `;
+                            }
+                        } else {
+                            // Other errors - show proxy issues message
+                            if (loadingDiv) {
+                                loadingDiv.innerHTML = `
+                                    <div class="loading-spinner"></div>
+                                    <p>Proxy services temporarily unavailable</p>
+                                    <p style="font-size: 0.9em; color: #666;">Using approximated data for ${member.name}... (${index + 1}/${groupData.members.length})</p>
+                                `;
+                            }
+                            
+                            // Fallback to generated data if individual fetch fails
+                            membersWithStats.push({
+                                ...member,
+                                skills: generateBasicSkillsData(member.totalLevel)
+                            });
                         }
-                        
-                        // Fallback to generated data if individual fetch fails
-                        membersWithStats.push({
-                            ...member,
-                            skills: generateBasicSkillsData(member.totalLevel)
-                        });
                     }
                 }
                 
@@ -5358,6 +5403,11 @@ if (typeof module !== 'undefined' && module.exports) {
             );
 
             const groupTotalContribution = groupData.members.reduce((sum, member) => {
+                // Skip members not on hiscores
+                if (member.notOnHiscores || !member.skills) {
+                    return sum;
+                }
+                
                 const memberXp = Object.values(member.skills).reduce((xpSum, skill) => 
                     xpSum + getSkillXp(skill), 0
                 );
@@ -5451,6 +5501,21 @@ if (typeof module !== 'undefined' && module.exports) {
             memberTotalDiv.className = 'member-total';
             memberTotalDiv.textContent = `Total Level: ${member.totalLevel}`;
             
+            memberHeaderDiv.appendChild(memberNameDiv);
+            memberHeaderDiv.appendChild(memberTotalDiv);
+            
+            // Check if member is not on hiscores
+            if (member.notOnHiscores) {
+                const notOnHiscoresDiv = document.createElement('div');
+                notOnHiscoresDiv.className = 'member-xp';
+                notOnHiscoresDiv.style.color = '#d2691e';
+                notOnHiscoresDiv.textContent = 'Not currently on the OSRS HiScores';
+                memberHeaderDiv.appendChild(notOnHiscoresDiv);
+                
+                memberCard.appendChild(memberHeaderDiv);
+                return memberCard; // Return early, don't show stats
+            }
+            
             // Calculate member's total XP using helper function
             const memberTotalXp = Object.values(member.skills).reduce((sum, skill) => 
                 sum + getSkillXp(skill), 0
@@ -5460,8 +5525,6 @@ if (typeof module !== 'undefined' && module.exports) {
             memberXpDiv.className = 'member-xp';
             memberXpDiv.textContent = `Total XP: ${memberTotalXp.toLocaleString()}`;
             
-            memberHeaderDiv.appendChild(memberNameDiv);
-            memberHeaderDiv.appendChild(memberTotalDiv);
             memberHeaderDiv.appendChild(memberXpDiv);
 
             // Create skills display using the exact same structure as Player Stats
