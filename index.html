@@ -319,6 +319,12 @@
                     
                 } catch (error) {
                     console.log(`Proxy ${i + 1} error:`, error.message);
+                    
+                    // If player not found, don't try other proxies
+                    if (error.message === 'PLAYER_NOT_FOUND') {
+                        throw error;
+                    }
+                    
                     continue;
                 }
             }
@@ -5055,7 +5061,7 @@ if (typeof module !== 'undefined' && module.exports) {
                                 loadingDiv.innerHTML = `
                                     <div class="loading-spinner"></div>
                                     <p>Loading group information...</p>
-                                    <p style="font-size: 0.9em; color: #666;">${member.name} not found on hiscores... (${index + 1}/${groupData.members.length})</p>
+                                    <p style="font-size: 0.9em; color: #666;">${member.name} not high enough level for leaderboard... (${index + 1}/${groupData.members.length})</p>
                                 `;
                             }
                         } else {
@@ -5509,7 +5515,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 const notOnHiscoresDiv = document.createElement('div');
                 notOnHiscoresDiv.className = 'member-xp';
                 notOnHiscoresDiv.style.color = '#d2691e';
-                notOnHiscoresDiv.textContent = 'Not currently on the OSRS HiScores';
+                notOnHiscoresDiv.textContent = 'Not high enough level to be viewed on the leaderboard';
                 memberHeaderDiv.appendChild(notOnHiscoresDiv);
                 
                 memberCard.appendChild(memberHeaderDiv);
