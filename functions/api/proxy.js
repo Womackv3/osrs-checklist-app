@@ -41,6 +41,14 @@ export async function onRequestGet(context) {
 
         if (!response.ok) {
             console.log(`Target responded with status: ${response.status}`);
+            
+            // Handle 404 specifically for player not found
+            if (response.status === 404) {
+                return new Response('PLAYER_NOT_FOUND', { 
+                    status: 404 
+                });
+            }
+            
             return new Response(`Target server error: ${response.status}`, { 
                 status: response.status 
             });

@@ -300,7 +300,10 @@
                         
                         // Handle 404 specifically - player not found on hiscores
                         if (response.status === 404) {
-                            throw new Error('PLAYER_NOT_FOUND');
+                            const errorText = await response.text();
+                            if (errorText === 'PLAYER_NOT_FOUND') {
+                                throw new Error('PLAYER_NOT_FOUND');
+                            }
                         }
                         
                         continue;
@@ -5435,7 +5438,6 @@ if (typeof module !== 'undefined' && module.exports) {
             const groupHeader = document.getElementById('group-header');
             groupHeader.innerHTML = `
                 <h2>${groupData.name}</h2>
-                ${usingApproximatedData ? '<p style="font-size: 0.9em; color: #d2691e; margin: 5px 0;">⚠️ Using approximated stats due to proxy service issues</p>' : ''}
                 <div class="group-info">
                     <div class="group-stat-item">
                         <div class="group-stat-label">Members</div>
