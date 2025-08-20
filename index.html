@@ -2918,41 +2918,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         
-        .member-selector-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
-            border: 2px solid #8b4513;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .member-selector-label {
-            font-family: 'Cinzel', serif;
-            font-weight: 600;
-            color: #2c1810;
-            white-space: nowrap;
-        }
-        
-        .member-selector {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #8b4513;
-            border-radius: 5px;
-            padding: 10px 15px;
-            font-family: 'Cinzel', serif;
-            font-size: 1em;
-            color: #2c1810;
-            cursor: pointer;
-        }
-        
-        .member-selector:focus {
-            outline: none;
-            border-color: #654321;
-            box-shadow: 0 0 5px rgba(139, 69, 19, 0.3);
-        }
         
         .group-stats-container {
             background: rgba(244, 228, 188, 0.5);
@@ -3509,13 +3474,6 @@
                             </div>
                         </div>
                         
-                        <!-- Member Selector Section -->
-                        <div id="member-selector-section" class="member-selector-section" style="display: none;">
-                            <label for="member-selector" class="member-selector-label">View Member Stats:</label>
-                            <select id="member-selector" class="member-selector" onchange="displaySelectedMember()">
-                                <option value="all">All Members</option>
-                            </select>
-                        </div>
                         
                         <!-- Group Stats Display -->
                         <div id="group-stats-container" class="group-stats-container" style="display: none;">
@@ -4954,8 +4912,10 @@ if (typeof module !== 'undefined' && module.exports) {
             document.getElementById('group-error').style.display = 'none';
 
             try {
-                // TODO: Implement actual OSRS Group Ironman API integration here
-                // This would fetch from OSRS hiscores API or proxy server
+                // Clear any cached data to force fresh lookup with latest UI changes
+                await clearGroupStatsFromDatabase();
+                
+                // Fetch fresh group data
                 const groupData = await fetchGroupStatsFromAPI(groupName);
                 
                 if (groupData && groupData.members && groupData.members.length > 0) {
@@ -5401,7 +5361,6 @@ if (typeof module !== 'undefined' && module.exports) {
             document.getElementById('group-loading').style.display = 'none';
             document.getElementById('group-error').style.display = 'none';
             document.getElementById('group-stats-container').style.display = 'block';
-            document.getElementById('member-selector-section').style.display = 'flex';
 
             // Store group data globally for member selector
             window.currentGroupData = groupData;
@@ -5453,37 +5412,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 </div>
             `;
 
-            // Populate member selector
-            const memberSelector = document.getElementById('member-selector');
-            memberSelector.innerHTML = '<option value="all">All Members</option>';
-            
-            groupData.members.forEach((member, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = `${member.name} (Level ${member.totalLevel})`;
-                memberSelector.appendChild(option);
-            });
-
-            // Display all members initially
-            displayAllMembers(groupData);
-        }
-
-        function displaySelectedMember() {
-            const memberSelector = document.getElementById('member-selector');
-            const selectedValue = memberSelector.value;
-            
-            if (!window.currentGroupData) return;
-            
-            if (selectedValue === 'all') {
-                displayAllMembers(window.currentGroupData);
-            } else {
-                const memberIndex = parseInt(selectedValue);
-                const selectedMember = window.currentGroupData.members[memberIndex];
-                displaySingleMember(selectedMember);
-            }
-        }
-
-        function displayAllMembers(groupData) {
+            // Display all members
             const groupMembers = document.getElementById('group-members');
             groupMembers.innerHTML = '';
 
@@ -5491,14 +5420,6 @@ if (typeof module !== 'undefined' && module.exports) {
                 const memberCard = createMemberCard(member);
                 groupMembers.appendChild(memberCard);
             });
-        }
-
-        function displaySingleMember(member) {
-            const groupMembers = document.getElementById('group-members');
-            groupMembers.innerHTML = '';
-            
-            const memberCard = createMemberCard(member);
-            groupMembers.appendChild(memberCard);
         }
 
         function createMemberCard(member) {
