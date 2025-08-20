@@ -3,10 +3,604 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSRS Player Dashboard</title>
+    <title>Iron Bible - OSRS Player Dashboard</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa3wZzS-_nO2fMXegbrReCOruaaTDtRNs",
+            authDomain: "osrsironbible.firebaseapp.com",
+            projectId: "osrsironbible",
+            storageBucket: "osrsironbible.firebasestorage.app",
+            messagingSenderId: "1078815537911",
+            appId: "1:1078815537911:web:59c488f9ed25e5e7a031f2",
+            measurementId: "G-CKC35ZZVE0"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Make Firebase available globally
+        window.firebase = {
+            auth,
+            db,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged,
+            doc,
+            setDoc,
+            getDoc,
+            collection,
+            addDoc,
+            query,
+            where,
+            getDocs,
+            deleteDoc,
+            onSnapshot
+        };
+
+        // Firestore Database Operations
+        // ===============================
+
+        /**
+         * Get the current user's ID for Firestore operations
+         */
+        function getCurrentUserId() {
+            const user = window.firebase.auth.currentUser;
+            if (!user) {
+                throw new Error('No authenticated user');
+            }
+            return user.uid;
+        }
+
+        /**
+         * Save a goal to user's Firestore collection
+         */
+        async function addGoalToFirestore(goal) {
+            try {
+                const userId = getCurrentUserId();
+                const goalRef = window.firebase.doc(window.firebase.db, `users/${userId}/goals`, goal.id);
+                await window.firebase.setDoc(goalRef, {
+                    ...goal,
+                    updatedAt: new Date(),
+                    createdAt: new Date()
+                });
+                console.log('Goal saved to Firestore:', goal.id);
+                return true;
+            } catch (error) {
+                console.error('Error saving goal to Firestore:', error);
+                return false;
+            }
+        }
+
+        /**
+         * Get all goals from user's Firestore collection
+         */
+        async function getAllGoalsFromFirestore() {
+            try {
+                const userId = getCurrentUserId();
+                const goalsRef = window.firebase.collection(window.firebase.db, `users/${userId}/goals`);
+                const snapshot = await window.firebase.getDocs(goalsRef);
+                
+                const goals = [];
+                snapshot.forEach((doc) => {
+                    goals.push({ ...doc.data(), id: doc.id });
+                });
+                
+                console.log(`Loaded ${goals.length} goals from Firestore`);
+                return goals;
+            } catch (error) {
+                console.error('Error loading goals from Firestore:', error);
+                return [];
+            }
+        }
+
+        /**
+         * Remove a goal from user's Firestore collection
+         */
+        async function removeGoalFromFirestore(goalId) {
+            try {
+                const userId = getCurrentUserId();
+                const goalRef = window.firebase.doc(window.firebase.db, `users/${userId}/goals`, goalId);
+                await window.firebase.deleteDoc(goalRef);
+                console.log('Goal removed from Firestore:', goalId);
+                return true;
+            } catch (error) {
+                console.error('Error removing goal from Firestore:', error);
+                return false;
+            }
+        }
+
+        /**
+         * Save goal selection to user's Firestore collection
+         */
+        async function saveGoalSelectionToFirestore(goalId, selected) {
+            try {
+                const userId = getCurrentUserId();
+                const selectionRef = window.firebase.doc(window.firebase.db, `users/${userId}/selections`, goalId);
+                
+                if (selected) {
+                    await window.firebase.setDoc(selectionRef, {
+                        id: goalId,
+                        selected: true,
+                        timestamp: new Date()
+                    });
+                } else {
+                    await window.firebase.deleteDoc(selectionRef);
+                }
+                
+                console.log(`Goal selection ${selected ? 'saved' : 'removed'} for:`, goalId);
+                return true;
+            } catch (error) {
+                console.error('Error saving goal selection to Firestore:', error);
+                return false;
+            }
+        }
+
+        /**
+         * Get selected goal IDs from user's Firestore collection
+         */
+        async function getSelectedGoalIdsFromFirestore() {
+            try {
+                const userId = getCurrentUserId();
+                const selectionsRef = window.firebase.collection(window.firebase.db, `users/${userId}/selections`);
+                const snapshot = await window.firebase.getDocs(selectionsRef);
+                
+                const selectedIds = [];
+                snapshot.forEach((doc) => {
+                    selectedIds.push(doc.id);
+                });
+                
+                console.log(`Loaded ${selectedIds.length} selected goals from Firestore`);
+                return selectedIds;
+            } catch (error) {
+                console.error('Error loading selected goals from Firestore:', error);
+                return [];
+            }
+        }
+
+        /**
+         * Save user stats to Firestore
+         */
+        async function saveStatsToFirestore(stats) {
+            try {
+                const userId = getCurrentUserId();
+                const statsRef = window.firebase.doc(window.firebase.db, `users/${userId}/data`, 'stats');
+                await window.firebase.setDoc(statsRef, {
+                    stats: stats,
+                    updatedAt: new Date()
+                });
+                console.log('Stats saved to Firestore');
+                return true;
+            } catch (error) {
+                console.error('Error saving stats to Firestore:', error);
+                return false;
+            }
+        }
+
+        /**
+         * Get user stats from Firestore
+         */
+        async function getStatsFromFirestore() {
+            try {
+                const userId = getCurrentUserId();
+                const statsRef = window.firebase.doc(window.firebase.db, `users/${userId}/data`, 'stats');
+                const doc = await window.firebase.getDoc(statsRef);
+                
+                if (doc.exists()) {
+                    const data = doc.data();
+                    console.log('Stats loaded from Firestore');
+                    return data.stats || {};
+                } else {
+                    console.log('No stats found in Firestore');
+                    return {};
+                }
+            } catch (error) {
+                console.error('Error loading stats from Firestore:', error);
+                return {};
+            }
+        }
+
+        // Player Stats Management
+        // =======================
+
+        let currentPlayerName = '';
+        let currentPlayerStats = {};
+
+        /**
+         * Lookup player stats from OSRS Hiscores API
+         */
+        async function lookupPlayer() {
+            const usernameInput = document.getElementById('username-input');
+            const username = usernameInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter a username');
+                return;
+            }
+
+            try {
+                console.log('Looking up player:', username);
+                
+                // Use CORS proxy for API access
+                const data = await fetchPlayerDataWithProxy(username);
+                const stats = parseHiscoresData(data);
+                
+                // Update the UI
+                await updateStatsDisplay(stats, username);
+                
+                // Save to local storage (IndexedDB mode)
+                console.log('Saving stats to local storage for', username);
+                
+                currentPlayerName = username;
+                currentPlayerStats = stats;
+                
+                // Save to localStorage as backup
+                localStorage.setItem('osrs_player_name', username);
+                localStorage.setItem('osrs_player_stats', JSON.stringify(stats));
+                
+            } catch (error) {
+                console.error('Error looking up player:', error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        /**
+         * Fetch player data using CORS proxy services
+         */
+        async function fetchPlayerDataWithProxy(username) {
+            // Multiple CORS proxy fallbacks
+            const proxies = [
+                'https://corsproxy.io/?',
+                'https://cors-anywhere.herokuapp.com/',
+                'https://api.codetabs.com/v1/proxy?quest=',
+                'https://thingproxy.freeboard.io/fetch/'
+            ];
+            
+            const hiscoresUrl = `https://secure.runescape.com/m=hiscore_oldschool/index_lite.ws?player=${encodeURIComponent(username)}`;
+            
+            for (let i = 0; i < proxies.length; i++) {
+                try {
+                    console.log(`Trying proxy ${i + 1}/${proxies.length}: ${proxies[i]}`);
+                    
+                    let proxyUrl;
+                    if (proxies[i].includes('codetabs')) {
+                        proxyUrl = proxies[i] + encodeURIComponent(hiscoresUrl);
+                    } else {
+                        proxyUrl = proxies[i] + hiscoresUrl;
+                    }
+                    
+                    const response = await fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: {
+                            'User-Agent': 'Iron-Bible/1.0'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        console.log(`Proxy ${i + 1} failed with status: ${response.status}`);
+                        continue;
+                    }
+                    
+                    const csvData = await response.text();
+                    
+                    // Validate that we got proper CSV data
+                    if (csvData && csvData.includes(',') && !csvData.includes('<!DOCTYPE')) {
+                        console.log(`Success with proxy ${i + 1}`);
+                        return csvData;
+                    } else {
+                        console.log(`Proxy ${i + 1} returned invalid data`);
+                        continue;
+                    }
+                    
+                } catch (error) {
+                    console.log(`Proxy ${i + 1} error:`, error.message);
+                    continue;
+                }
+            }
+            
+            throw new Error(`Unable to fetch player data for "${username}". All proxy services are currently unavailable. Please try again later.`);
+        }
+
+        /**
+         * Parse OSRS Hiscores data format
+         */
+        function parseHiscoresData(data) {
+            const lines = data.trim().split('\n');
+            const skillNames = [
+                'overall', 'attack', 'defence', 'strength', 'hitpoints', 'ranged', 'prayer', 'magic',
+                'cooking', 'woodcutting', 'fletching', 'fishing', 'firemaking', 'crafting', 'smithing',
+                'mining', 'herblore', 'agility', 'thieving', 'slayer', 'farming', 'runecraft', 'hunter', 'construction'
+            ];
+            
+            const stats = {};
+            
+            skillNames.forEach((skill, index) => {
+                if (lines[index]) {
+                    const parts = lines[index].split(',');
+                    const rank = parseInt(parts[0]) || -1;
+                    const level = parseInt(parts[1]) || 1;
+                    const xp = parseInt(parts[2]) || 0;
+                    
+                    stats[skill] = {
+                        rank: rank,
+                        level: level,
+                        xp: xp
+                    };
+                }
+            });
+            
+            return stats;
+        }
+
+        /**
+         * Update the stats display in the UI
+         */
+        async function updateStatsDisplay(stats, playerName) {
+            // Update player name display
+            const usernameInput = document.getElementById('username-input');
+            if (usernameInput && playerName) {
+                usernameInput.value = playerName;
+                usernameInput.placeholder = `Current: ${playerName}`;
+            }
+            
+            // Map skill names to their position in the stats grid
+            const skillMapping = {
+                'attack': 0, 'strength': 1, 'defence': 2, 'ranged': 3, 'prayer': 4, 'magic': 5, 'runecraft': 6, 'construction': 7,
+                'hitpoints': 8, 'agility': 9, 'herblore': 10, 'thieving': 11, 'crafting': 12, 'fletching': 13, 'slayer': 14, 'hunter': 15,
+                'mining': 16, 'smithing': 17, 'fishing': 18, 'cooking': 19, 'firemaking': 20, 'woodcutting': 21, 'farming': 22
+            };
+            
+            // Define max levels for each skill
+            const skillMaxLevels = {
+                'attack': 99, 'strength': 99, 'defence': 99, 'ranged': 99, 'prayer': 99, 'magic': 99, 'runecraft': 99, 'construction': 99,
+                'hitpoints': 99, 'agility': 99, 'herblore': 99, 'thieving': 99, 'crafting': 99, 'fletching': 99, 'slayer': 99, 'hunter': 99,
+                'mining': 99, 'smithing': 99, 'fishing': 99, 'cooking': 99, 'firemaking': 99, 'woodcutting': 99, 'farming': 99
+            };
+            
+            const statItems = document.querySelectorAll('.stat-item .stat-level');
+            
+            Object.keys(skillMapping).forEach(skillName => {
+                const index = skillMapping[skillName];
+                const skillData = stats[skillName];
+                
+                if (skillData && statItems[index]) {
+                    const level = skillData.level;
+                    const maxLevel = skillMaxLevels[skillName];
+                    statItems[index].textContent = `${level}/${maxLevel}`;
+                    
+                    // Add visual indicator for high levels
+                    const statItem = statItems[index].parentElement;
+                    if (level >= 99) {
+                        statItem.style.background = 'rgba(255, 215, 0, 0.2)'; // Gold for 99
+                    } else if (level >= 90) {
+                        statItem.style.background = 'rgba(0, 255, 0, 0.1)'; // Green for 90+
+                    } else {
+                        statItem.style.background = 'rgba(139, 69, 19, 0.1)'; // Default
+                    }
+                }
+            });
+            
+            console.log(`Updated stats display for ${playerName}`);
+        }
+
+        /**
+         * Load saved player stats on page load
+         */
+        async function loadSavedPlayerStats() {
+            try {
+                // Load from localStorage (IndexedDB-only mode)
+                const savedName = localStorage.getItem('osrs_player_name');
+                const savedStats = localStorage.getItem('osrs_player_stats');
+                
+                if (savedName && savedStats) {
+                    console.log('Loading stats from localStorage:', savedName);
+                    const stats = JSON.parse(savedStats);
+                    await updateStatsDisplay(stats, savedName);
+                    currentPlayerName = savedName;
+                    currentPlayerStats = stats;
+                } else {
+                    console.log('No saved player stats found - use "Lookup Player" to load your stats');
+                }
+            } catch (error) {
+                console.error('Error loading saved player stats:', error);
+            }
+        }
+
+        /**
+         * Get current player info
+         */
+        function getCurrentPlayer() {
+            return {
+                name: currentPlayerName,
+                stats: currentPlayerStats
+            };
+        }
+
+        // Real-time Sync Operations
+        // =========================
+
+        let selectionsListener = null;
+        let goalsListener = null;
+        let statsListener = null;
+
+        /**
+         * Set up real-time listeners for user data
+         */
+        function setupRealtimeSync() {
+            if (!isFirestoreAvailable()) {
+                console.log('Real-time sync not available - user not authenticated');
+                return;
+            }
+
+            const userId = getCurrentUserId();
+            console.log('Setting up real-time sync for user:', userId);
+
+            // Listen to changes in user's selected goals
+            const selectionsRef = window.firebase.collection(window.firebase.db, `users/${userId}/selections`);
+            selectionsListener = window.firebase.onSnapshot(selectionsRef, (snapshot) => {
+                console.log('Selections changed - syncing...');
+                
+                snapshot.docChanges().forEach((change) => {
+                    const goalId = change.doc.id;
+                    
+                    if (change.type === 'added' || change.type === 'modified') {
+                        // Goal was selected
+                        updateButtonStateFromGoalId(goalId, true);
+                    } else if (change.type === 'removed') {
+                        // Goal was deselected
+                        updateButtonStateFromGoalId(goalId, false);
+                    }
+                });
+
+                // Refresh the UI after all changes
+                setTimeout(async () => {
+                    await populateGoalsList();
+                    await updateRequirements();
+                }, 100);
+            });
+
+            // Listen to changes in user's goals (less common but important for custom goals)
+            const goalsRef = window.firebase.collection(window.firebase.db, `users/${userId}/goals`);
+            goalsListener = window.firebase.onSnapshot(goalsRef, (snapshot) => {
+                console.log('Goals changed - syncing...');
+                
+                let hasChanges = false;
+                snapshot.docChanges().forEach((change) => {
+                    const goalData = { ...change.doc.data(), id: change.doc.id };
+                    
+                    if (change.type === 'added') {
+                        // New goal added
+                        const existingIndex = masterGoalsList.findIndex(g => g.id === goalData.id);
+                        if (existingIndex === -1) {
+                            masterGoalsList.push(goalData);
+                            hasChanges = true;
+                        }
+                    } else if (change.type === 'modified') {
+                        // Goal updated
+                        const existingIndex = masterGoalsList.findIndex(g => g.id === goalData.id);
+                        if (existingIndex >= 0) {
+                            masterGoalsList[existingIndex] = goalData;
+                            hasChanges = true;
+                        }
+                    } else if (change.type === 'removed') {
+                        // Goal removed
+                        const existingIndex = masterGoalsList.findIndex(g => g.id === goalData.id);
+                        if (existingIndex >= 0) {
+                            masterGoalsList.splice(existingIndex, 1);
+                            hasChanges = true;
+                        }
+                    }
+                });
+
+                // Refresh the UI if there were changes
+                if (hasChanges) {
+                    setTimeout(async () => {
+                        await populateGoalsList();
+                        await updateRequirements();
+                    }, 100);
+                }
+            });
+
+            // Listen to changes in user's stats
+            const statsRef = window.firebase.doc(window.firebase.db, `users/${userId}/data`, 'stats');
+            statsListener = window.firebase.onSnapshot(statsRef, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    if (data.stats && data.stats.username) {
+                        console.log('Stats changed - syncing...');
+                        updateStatsDisplay(data.stats.stats, data.stats.username);
+                        currentPlayerName = data.stats.username;
+                        currentPlayerStats = data.stats.stats;
+                    }
+                }
+            });
+
+            console.log('Real-time sync listeners established');
+        }
+
+        /**
+         * Clean up real-time listeners
+         */
+        function cleanupRealtimeSync() {
+            if (selectionsListener) {
+                selectionsListener();
+                selectionsListener = null;
+                console.log('Selections listener cleaned up');
+            }
+            
+            if (goalsListener) {
+                goalsListener();
+                goalsListener = null;
+                console.log('Goals listener cleaned up');
+            }
+            
+            if (statsListener) {
+                statsListener();
+                statsListener = null;
+                console.log('Stats listener cleaned up');
+            }
+        }
+
+        // Initialize auth state listener when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // TEMPORARILY DISABLED - No authentication needed for IndexedDB only
+            // if (window.initializeAuth) {
+            //     window.initializeAuth();
+            // }
+            
+            // Load stats for local-only mode
+            setTimeout(async () => {
+                await loadSavedPlayerStats();
+            }, 1000);
+        });
+
+        // Make all Firebase and stats functions globally available
+        // ======================================================
+        
+        // Firestore functions
+        window.getCurrentUserId = getCurrentUserId;
+        window.addGoalToFirestore = addGoalToFirestore;
+        window.getAllGoalsFromFirestore = getAllGoalsFromFirestore;
+        window.removeGoalFromFirestore = removeGoalFromFirestore;
+        window.saveGoalSelectionToFirestore = saveGoalSelectionToFirestore;
+        window.getSelectedGoalIdsFromFirestore = getSelectedGoalIdsFromFirestore;
+        window.saveStatsToFirestore = saveStatsToFirestore;
+        window.getStatsFromFirestore = getStatsFromFirestore;
+        
+        // Hybrid database functions
+        window.isFirestoreAvailable = isFirestoreAvailable;
+        window.addGoalToDatabase = addGoalToDatabase;
+        window.getAllGoalsFromDatabase = getAllGoalsFromDatabase;
+        window.removeGoalFromDatabase = removeGoalFromDatabase;
+        window.saveGoalSelectionToDatabase = saveGoalSelectionToDatabase;
+        window.getSelectedGoalIdsFromDatabase = getSelectedGoalIdsFromDatabase;
+        window.migrateToFirestore = migrateToFirestore;
+        window.loadFromFirestore = loadFromFirestore;
+        
+        // Stats management functions
+        window.lookupPlayer = lookupPlayer;
+        window.parseHiscoresData = parseHiscoresData;
+        window.updateStatsDisplay = updateStatsDisplay;
+        window.loadSavedPlayerStats = loadSavedPlayerStats;
+        window.getCurrentPlayer = getCurrentPlayer;
+        
+        // Real-time sync functions
+        window.setupRealtimeSync = setupRealtimeSync;
+        window.cleanupRealtimeSync = cleanupRealtimeSync;
+    </script>
     
     <style>
         * {
@@ -19,8 +613,118 @@
             font-family: 'Cinzel', serif;
             background: linear-gradient(45deg, #2c1810, #3d2617);
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
+            padding-top: 80px; /* Space for fixed header */
             color: #2c1810;
+        }
+        
+        /* Top Header Bar */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(135deg, #8b4513, #654321);
+            border-bottom: 3px solid #d4c4a0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header-title {
+            font-family: 'MedievalSharp', serif;
+            font-size: 1.8em;
+            color: #f4e4bc;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1px;
+        }
+        
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .user-greeting {
+            color: #f4e4bc;
+            font-size: 0.9em;
+            display: none; /* Hidden when not logged in */
+        }
+        
+        .hamburger-menu {
+            position: relative;
+        }
+        
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: #f4e4bc;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+        
+        .hamburger-btn:hover {
+            background: rgba(244, 228, 188, 0.1);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: linear-gradient(135deg, #8b4513, #654321);
+            border: 2px solid #d4c4a0;
+            border-radius: 8px;
+            min-width: 200px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1001;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: #f4e4bc;
+            text-align: left;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+            border-bottom: 1px solid rgba(212, 196, 160, 0.2);
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(244, 228, 188, 0.1);
+        }
+        
+        .dropdown-item.danger {
+            color: #ff6b6b;
+        }
+        
+        .dropdown-item.danger:hover {
+            background: rgba(255, 107, 107, 0.1);
+        }
+        
+        /* Adjust main content for header */
+        .journal-container {
+            margin-top: 20px;
         }
 
         /* Main Journal Container */
@@ -500,40 +1204,86 @@
             transform: translateY(-2px);
         }
 
-        /* Add to Todo Button Styles */
+        /* Add to Journal Button Styles - Quill & Scroll Theme */
         .add-to-todo-btn {
-            background: linear-gradient(135deg, #4a90e2, #357abd);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(139, 69, 19, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(160, 82, 45, 0.3) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(139, 69, 19, 0.1) 2px, rgba(139, 69, 19, 0.1) 4px);
+            color: #F4E4BC;
+            border: 2px solid #654321;
+            padding: 6px 12px;
+            border-radius: 6px;
             font-size: 0.8em;
             font-family: 'Cinzel', serif;
             cursor: pointer;
             transition: all 0.3s ease;
             margin-left: 10px;
+            box-shadow: 
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(244, 228, 188, 0.2);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-weight: 600;
+            position: relative;
+            min-width: 120px;
+            width: 120px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .add-to-todo-btn:before {
+            content: "🪶";
+            margin-right: 4px;
+            font-size: 0.9em;
         }
 
         .add-to-todo-btn:hover {
-            background: linear-gradient(135deg, #357abd, #2968a3);
+            background: linear-gradient(135deg, #A0522D, #CD853F);
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(160, 82, 45, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(205, 133, 63, 0.3) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(160, 82, 45, 0.1) 2px, rgba(160, 82, 45, 0.1) 4px);
             transform: translateY(-1px);
+            box-shadow: 
+                0 3px 6px rgba(0,0,0,0.4),
+                inset 0 1px 0 rgba(244, 228, 188, 0.3);
+            border-color: #8B4513;
         }
 
         .add-to-todo-btn.added {
-            background: linear-gradient(135deg, #28a745, #218838);
+            background: linear-gradient(135deg, #556B2F, #6B8E23);
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(85, 107, 47, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(107, 142, 35, 0.3) 0%, transparent 50%);
+            border-color: #2F4F2F;
             pointer-events: none;
+        }
+
+        .add-to-todo-btn.added:before {
+            content: "📜";
+            margin-right: 4px;
         }
 
         .add-to-todo-btn.added:after {
             content: " ✓";
+            color: #90EE90;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
         }
 
         .add-to-todo-btn-small {
-            padding: 2px 6px;
+            padding: 3px 8px;
             font-size: 0.7em;
             margin-left: 5px;
             min-width: auto;
-            border-radius: 3px;
+            width: auto;
+            border-radius: 4px;
+        }
+
+        .add-to-todo-btn-small:before {
+            font-size: 0.8em;
+            margin-right: 2px;
         }
 
         /* Skill Level Input Styles */
@@ -721,6 +1471,140 @@
             font-weight: bold;
         }
         
+        /* Authentication Styles */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .auth-modal {
+            background: linear-gradient(135deg, #8b4513, #654321);
+            border: 3px solid #d4c4a0;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .auth-modal h2 {
+            color: #f4e4bc;
+            font-family: 'MedievalSharp', serif;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .auth-input {
+            padding: 12px 15px;
+            border: 2px solid #d4c4a0;
+            border-radius: 8px;
+            background: rgba(244, 228, 188, 0.9);
+            font-family: 'Cinzel', serif;
+            font-size: 1em;
+            color: #2c1810;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-input:focus {
+            border-color: #654321;
+            background: rgba(244, 228, 188, 1);
+            box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
+        }
+        
+        .auth-button {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: 'MedievalSharp', serif;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-button:hover {
+            background: linear-gradient(135deg, #357abd, #2968a3);
+            transform: translateY(-2px);
+        }
+        
+        .auth-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .auth-toggle {
+            text-align: center;
+            margin-top: 15px;
+            color: #f4e4bc;
+        }
+        
+        .auth-toggle a {
+            color: #4a90e2;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+        
+        .auth-error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+            color: #dc3545;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(139, 69, 19, 0.9);
+            color: #f4e4bc;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #f4e4bc;
+            color: #f4e4bc;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: #f4e4bc;
+            color: #8b4513;
+        }
 
         /* Remove Button Styles */
         .remove-goal-btn {
@@ -1014,56 +1898,88 @@
         }
 
         .difficulty-tile.easy {
-            background: linear-gradient(135deg, #d4f4d4, #c8e8c8);
-            border-color: #5a9b5a;
+            background: linear-gradient(135deg, #f4e4bc, #e6d4a0);
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(139, 69, 19, 0.1) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(139, 69, 19, 0.05) 3px, rgba(139, 69, 19, 0.05) 6px);
+            border-color: #8b6914;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3);
         }
 
         .difficulty-tile.easy:hover {
-            background: linear-gradient(135deg, #e0f8e0, #d4ecd4);
+            background: linear-gradient(135deg, #f8e8c0, #ead8a4);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
         }
 
         .difficulty-tile.medium {
-            background: linear-gradient(135deg, #fff4d4, #f4e8c8);
-            border-color: #cc9900;
+            background: linear-gradient(135deg, #e6d4a0, #d4c084);
+            background-image: 
+                radial-gradient(circle at 80% 20%, rgba(139, 69, 19, 0.15) 0%, transparent 50%),
+                repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(139, 69, 19, 0.08) 3px, rgba(139, 69, 19, 0.08) 6px);
+            border-color: #a0522d;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25);
         }
 
         .difficulty-tile.medium:hover {
-            background: linear-gradient(135deg, #fff8e0, #f8ecd4);
+            background: linear-gradient(135deg, #ead8a4, #d8c488);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
         }
 
         .difficulty-tile.hard {
-            background: linear-gradient(135deg, #f4d4d4, #e8c8c8);
-            border-color: #cc3333;
+            background: linear-gradient(135deg, #d4c084, #c0a868);
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(139, 69, 19, 0.2) 0%, transparent 50%),
+                repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(139, 69, 19, 0.1) 4px, rgba(139, 69, 19, 0.1) 8px);
+            border-color: #8b4513;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
         }
 
         .difficulty-tile.hard:hover {
-            background: linear-gradient(135deg, #f8e0e0, #ecd4d4);
+            background: linear-gradient(135deg, #d8c488, #c4ac6c);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
         }
 
         .difficulty-tile.elite {
-            background: linear-gradient(135deg, #e4d4f4, #d8c8e8);
-            border-color: #8855cc;
+            background: linear-gradient(135deg, #c0a868, #a8944c);
+            background-image: 
+                radial-gradient(circle at 60% 60%, rgba(139, 69, 19, 0.25) 0%, transparent 50%),
+                repeating-linear-gradient(30deg, transparent, transparent 2px, rgba(139, 69, 19, 0.15) 2px, rgba(139, 69, 19, 0.15) 4px);
+            border-color: #654321;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
         }
 
         .difficulty-tile.elite:hover {
-            background: linear-gradient(135deg, #e8e0f8, #dcd4ec);
+            background: linear-gradient(135deg, #c4ac6c, #ac9850);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.25);
         }
 
         .difficulty-tile h3 {
-            font-family: 'MedievalSharp', serif;
+            font-family: 'Cinzel', serif;
             font-size: 1.4em;
             margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            font-weight: 600;
         }
 
-        .difficulty-tile.easy h3 { color: #2d5a2d; }
-        .difficulty-tile.medium h3 { color: #b8860b; }
-        .difficulty-tile.hard h3 { color: #8b0000; }
-        .difficulty-tile.elite h3 { color: #663399; }
+        .difficulty-tile.easy h3 { color: #5d4e37; }
+        .difficulty-tile.medium h3 { color: #4a3728; }
+        .difficulty-tile.hard h3 { color: #3c2e1f; }
+        .difficulty-tile.elite h3 { color: #2d2516; }
 
         .difficulty-tile p {
             font-size: 1em;
             margin: 0;
+            opacity: 0.7;
+            color: #5d4e37;
+            font-style: italic;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
+        }
+
+        .tile-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
             opacity: 0.8;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         /* Difficulty Detail View */
@@ -1453,7 +2369,7 @@
         }
     </style>
     <!-- Include monster database -->
-    <script src="monsters.js"></script>
+    <script src="monsters.js?v=2.1"></script>
     <!-- Include potions database -->
     <script src="potions.js"></script>
     <!-- Include diaries database -->
@@ -1464,6 +2380,28 @@
     <script src="quests.js"></script>
 </head>
 <body>
+    <!-- Top Header Bar -->
+    <header class="top-header">
+        <div class="header-title">Iron Bible</div>
+        <nav class="header-nav">
+            <div id="user-greeting" class="user-greeting">
+                Hello, <span id="user-nickname">Adventurer</span>
+            </div>
+            <div class="hamburger-menu">
+                <button class="hamburger-btn" onclick="toggleDropdown()">
+                    ☰
+                </button>
+                <div id="dropdown-menu" class="dropdown-menu">
+                    <button class="dropdown-item" onclick="openProfile()">Profile Settings</button>
+                    <button class="dropdown-item" onclick="openImportExport()">Import/Export Data</button>
+                    <button class="dropdown-item" onclick="openHelp()">Help & Tutorial</button>
+                    <button class="dropdown-item" onclick="openAbout()">About Iron Bible</button>
+                    <button class="dropdown-item danger" onclick="logout()">Sign Out</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
     <div class="journal-container">
         <div class="book-pages">
             <!-- Left Page - Interactive Journal -->
@@ -1487,17 +2425,6 @@
                     <div id="slayer-tab" class="tab-content">
                         <h1>Slayer Guide</h1>
                         <h2>Choose a Slayer Monster:</h2>
-                        <div style="margin-bottom: 15px;">
-                            <button onclick="populateMonsterSelector()" style="margin-right: 10px; padding: 5px 10px; background: #8b4513; color: white; border: none; border-radius: 3px; cursor: pointer;">🔄 Reload Monsters</button>
-                            <button onclick="downloadFullMonsterList()" style="padding: 5px 10px; background: #4a90e2; color: white; border: none; border-radius: 3px; cursor: pointer;">📥 Download Complete Slayer Database</button>
-                        </div>
-                        <div id="download-progress-container" style="display: none; margin-bottom: 15px;">
-                            <div style="margin-bottom: 5px; color: #2c1810; font-size: 0.9em;">Updating monster database...</div>
-                            <div class="magic-progress-bar">
-                                <div id="magic-progress-fill" class="magic-progress-fill"></div>
-                                <div class="magic-sparkles"></div>
-                            </div>
-                        </div>
                         <select id="monster-selector" class="monster-selector" onchange="updateMonsterInfo()">
                             <option value="">Select a monster...</option>
                         </select>
@@ -1550,7 +2477,7 @@
 
                     <!-- To-Do List Tab -->
                     <div id="todo-tab" class="tab-content">
-                        <h1>Personal To-Do List</h1>
+                        <h1>To-Do List</h1>
                         
                         <!-- Master List Container - Top Half -->
                         <div id="master-list-container">
@@ -1696,7 +2623,6 @@
                         <div id="diary-main-view">
                             <h1>Achievement Diaries</h1>
                             <div style="margin-bottom: 15px;">
-                                <button onclick="populateDiaryTiles()" style="margin-right: 10px; padding: 5px 10px; background: #8b4513; color: white; border: none; border-radius: 3px; cursor: pointer;">🔄 Reload Diaries</button>
                                 <span id="diary-progress-summary" style="color: #2c1810; font-weight: bold;"></span>
                             </div>
                             <div class="diaries-grid" id="diaries-grid">
@@ -1712,21 +2638,25 @@
                             <div class="difficulty-tiles">
                                 <div class="difficulty-tile easy" onclick="showDifficulty('easy')">
                                     <div class="tile-corner"></div>
+                                    <div class="tile-icon">📝</div>
                                     <h3>Easy</h3>
                                     <p>Beginner tasks</p>
                                 </div>
                                 <div class="difficulty-tile medium" onclick="showDifficulty('medium')">
                                     <div class="tile-corner"></div>
+                                    <div class="tile-icon">📜</div>
                                     <h3>Medium</h3>
                                     <p>Intermediate tasks</p>
                                 </div>
                                 <div class="difficulty-tile hard" onclick="showDifficulty('hard')">
                                     <div class="tile-corner"></div>
+                                    <div class="tile-icon">📋</div>
                                     <h3>Hard</h3>
                                     <p>Advanced tasks</p>
                                 </div>
                                 <div class="difficulty-tile elite" onclick="showDifficulty('elite')">
                                     <div class="tile-corner"></div>
+                                    <div class="tile-icon">📖</div>
                                     <h3>Elite</h3>
                                     <p>Master tasks</p>
                                 </div>
@@ -1993,7 +2923,8 @@
                 option.value = Object.keys(MONSTER_DATABASE).find(key => 
                     MONSTER_DATABASE[key].name === monster.name
                 );
-                option.textContent = `${monster.name} (Level ${monster.slayer_level} Slayer)`;
+                const slayerText = monster.slayer_level > 0 ? `(Level ${monster.slayer_level} Slayer)` : '(No Slayer Level Required)';
+                option.textContent = `${monster.name} ${slayerText}`;
                 selector.appendChild(option);
             });
             
@@ -2783,196 +3714,9 @@ if (typeof module !== 'undefined' && module.exports) {
         // are kept below for potential future use
 
 
-        // OSRS Hiscores API implementation
-        
-        // Skill names in the order they appear in the hiscores CSV
-        const skillNames = [
-            'overall', 'attack', 'defence', 'strength', 'hitpoints', 'ranged', 'prayer', 'magic',
-            'cooking', 'woodcutting', 'fletching', 'fishing', 'firemaking', 'crafting', 'smithing',
-            'mining', 'herblore', 'agility', 'thieving', 'slayer', 'farming', 'runecraft', 'hunter', 'construction'
-        ];
+        // Duplicate functions removed - using the earlier definitions with CORS proxy support
 
-        async function fetchPlayerData(username) {
-            // Multiple CORS proxy fallbacks
-            const proxies = [
-                'https://corsproxy.io/?',
-                'https://cors-anywhere.herokuapp.com/',
-                'https://api.codetabs.com/v1/proxy?quest=',
-                'https://thingproxy.freeboard.io/fetch/'
-            ];
-            
-            const hiscoresUrl = `https://secure.runescape.com/m=hiscore_oldschool/index_lite.ws?player=${encodeURIComponent(username)}`;
-            
-            for (let i = 0; i < proxies.length; i++) {
-                try {
-                    console.log(`Trying proxy ${i + 1}/${proxies.length}: ${proxies[i]}`);
-                    
-                    let proxyUrl;
-                    if (proxies[i].includes('codetabs')) {
-                        proxyUrl = proxies[i] + encodeURIComponent(hiscoresUrl);
-                    } else {
-                        proxyUrl = proxies[i] + hiscoresUrl;
-                    }
-                    
-                    const response = await fetch(proxyUrl, {
-                        method: 'GET',
-                        headers: {
-                            'User-Agent': 'OSRS-Player-Dashboard/1.0'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        console.log(`Proxy ${i + 1} failed with status: ${response.status}`);
-                        continue;
-                    }
-                    
-                    const csvData = await response.text();
-                    
-                    // Validate that we got proper CSV data
-                    if (csvData && csvData.includes(',') && !csvData.includes('<!DOCTYPE')) {
-                        console.log(`Success with proxy ${i + 1}`);
-                        return parseHiscoresData(csvData, username);
-                    } else {
-                        console.log(`Proxy ${i + 1} returned invalid data`);
-                        continue;
-                    }
-                    
-                } catch (error) {
-                    console.log(`Proxy ${i + 1} error:`, error.message);
-                    continue;
-                }
-            }
-            
-            // If all proxies fail, try direct fetch (will fail due to CORS, but worth trying)
-            try {
-                console.log('All proxies failed, trying direct fetch...');
-                const response = await fetch(hiscoresUrl);
-                if (response.ok) {
-                    const csvData = await response.text();
-                    return parseHiscoresData(csvData, username);
-                }
-            } catch (error) {
-                console.log('Direct fetch failed as expected due to CORS');
-            }
-            
-            throw new Error('Unable to fetch player data from OSRS Hiscores. All proxy services are currently unavailable.');
-        }
-
-        function parseHiscoresData(csvData, username) {
-            const lines = csvData.trim().split('\n');
-            const playerData = { username: username, skills: {} };
-            
-            // Parse each line: rank,level,xp
-            lines.forEach((line, index) => {
-                if (index < skillNames.length) {
-                    const [rank, level, xp] = line.split(',');
-                    const skillName = skillNames[index];
-                    
-                    playerData.skills[skillName] = {
-                        rank: parseInt(rank) || -1,
-                        level: parseInt(level) || 1,
-                        xp: parseInt(xp) || 0
-                    };
-                }
-            });
-            
-            return playerData;
-        }
-        
-        // Lookup player function
-        async function lookupPlayer() {
-            const usernameInput = document.getElementById('username-input');
-            const lookupBtn = document.getElementById('lookup-btn');
-            const username = usernameInput.value.trim();
-            
-            if (!username) {
-                alert('Please enter a username');
-                return;
-            }
-            
-            // Update button state
-            lookupBtn.disabled = true;
-            lookupBtn.textContent = 'Looking up...';
-            
-            try {
-                console.log('Looking up player:', username);
-                const playerData = await fetchPlayerData(username);
-                updateStatsPanel(playerData);
-                console.log('Player lookup successful:', playerData);
-            } catch (error) {
-                console.error('Error looking up player:', error);
-                alert(`Error looking up player: ${error.message}`);
-                
-                // Reset page title on error
-                const statsTitle = document.querySelector('#stats-tab h1');
-                if (statsTitle) {
-                    statsTitle.textContent = 'Player Stats';
-                }
-            } finally {
-                // Reset button state
-                lookupBtn.disabled = false;
-                lookupBtn.textContent = 'Lookup Player';
-            }
-        }
-
-        // Update stats panel with real player data
-        function updateStatsPanel(playerData) {
-            console.log('Updating stats panel with player data:', playerData);
-            
-            // Map skill names to their display order in our grid
-            const skillMapping = {
-                'attack': 0, 'strength': 1, 'defence': 2, 'ranged': 3, 'prayer': 4, 'magic': 5, 'runecraft': 6, 'construction': 7,
-                'hitpoints': 8, 'agility': 9, 'herblore': 10, 'thieving': 11, 'crafting': 12, 'fletching': 13, 'slayer': 14, 'hunter': 15,
-                'mining': 16, 'smithing': 17, 'fishing': 18, 'cooking': 19, 'firemaking': 20, 'woodcutting': 21, 'farming': 22
-            };
-            
-            // Define max levels for each skill
-            const skillMaxLevels = {
-                'attack': 99, 'strength': 99, 'defence': 99, 'ranged': 99, 'prayer': 99, 'magic': 99, 'runecraft': 99, 'construction': 99,
-                'hitpoints': 99, 'agility': 99, 'herblore': 99, 'thieving': 99, 'crafting': 99, 'fletching': 99, 'slayer': 99, 'hunter': 99,
-                'mining': 99, 'smithing': 99, 'fishing': 18, 'cooking': 99, 'firemaking': 99, 'woodcutting': 99, 'farming': 99
-            };
-            
-            const statItems = document.querySelectorAll('.stat-item .stat-level');
-            
-            Object.keys(skillMapping).forEach(skillName => {
-                const index = skillMapping[skillName];
-                const skillData = playerData.skills[skillName];
-                
-                if (skillData && statItems[index]) {
-                    const level = skillData.level;
-                    const maxLevel = skillMaxLevels[skillName];
-                    statItems[index].textContent = `${level}/${maxLevel}`;
-                    
-                    // Add visual feedback for maxed skills
-                    if (level >= maxLevel) {
-                        statItems[index].style.color = '#d4af37'; // Gold color for maxed skills
-                        statItems[index].style.fontWeight = 'bold';
-                    } else {
-                        statItems[index].style.color = '#654321'; // Default color
-                        statItems[index].style.fontWeight = '600';
-                    }
-                }
-            });
-            
-            // Update page title to show player name
-            const statsTitle = document.querySelector('#stats-tab h1');
-            if (statsTitle) {
-                statsTitle.textContent = `${playerData.username}'s Stats`;
-            }
-        }
-
-
-
-        // TODO: Logic to update gear item images from RuneLite or item database
-        function updateGearPanel(playerData) {
-            /*
-            This function will update gear slots with actual equipped items
-            Will fetch item images from OSRS wiki or item database
-            Each slot will display the equipped item image and name on hover
-            */
-            console.log('Updating gear panel with equipment data');
-        }
+        console.log('Iron Bible - OSRS Player Dashboard initialized');
 
 
         // Achievement Diaries Data - loaded from diaries.js
@@ -3020,7 +3764,7 @@ if (typeof module !== 'undefined' && module.exports) {
                                 <input type="checkbox" id="task-${currentDiary}-${difficulty}-${index}" 
                                        onchange="toggleTaskComplete('${currentDiary}', '${difficulty}', ${index})">
                                 <label for="task-${currentDiary}-${difficulty}-${index}">${task.description}</label>
-                                <button class="add-to-todo-btn" onclick="openTodoModal('diary', '${currentDiary}', '${difficulty}', ${index})">+ To-Do</button>
+                                <button class="add-to-todo-btn" onclick="openTodoModal('diary', '${currentDiary}', '${difficulty}', ${index})">Add to Journal</button>
                             </li>`
                         ).join('')}
                     </ul>
@@ -3097,8 +3841,13 @@ if (typeof module !== 'undefined' && module.exports) {
             const isCompleted = localStorage.getItem(storageKey) === 'true';
             localStorage.setItem(storageKey, (!isCompleted).toString());
             
-            // Update progress display if on main view
-            if (document.getElementById('diary-main-view').style.display !== 'none') {
+            // Always update progress display automatically
+            updateDiaryProgress();
+        }
+        
+        function updateDiaryProgress() {
+            // Update main diary view if it exists
+            if (document.getElementById('diary-main-view')) {
                 populateDiaryTiles();
             }
         }
@@ -3176,7 +3925,7 @@ if (typeof module !== 'undefined' && module.exports) {
                     </div>
                     <div class="quest-actions">
                         <span class="difficulty-badge ${quest.difficulty}">${quest.difficulty.charAt(0).toUpperCase() + quest.difficulty.slice(1)}</span>
-                        <button class="add-to-todo-btn" onclick="event.stopPropagation(); openTodoModal('quest', '${questId}')">+ To-Do</button>
+                        <button class="add-to-todo-btn" onclick="event.stopPropagation(); openTodoModal('quest', '${questId}')">Add to Journal</button>
                     </div>
                 `;
                 
@@ -3295,7 +4044,173 @@ if (typeof module !== 'undefined' && module.exports) {
             });
         });
 
-        console.log('OSRS Player Dashboard with Achievement Diaries and Quests initialized');
+        console.log('Iron Bible - OSRS Player Dashboard initialized');
+
+        // ========== HYBRID DATABASE OPERATIONS ==========
+        
+        /**
+         * Check if user is authenticated and Firestore is available
+         */
+        function isFirestoreAvailable() {
+            // TEMPORARILY DISABLED - Using IndexedDB only for now
+            // TODO: Re-enable when running from web server
+            console.log('Firestore temporarily disabled - using IndexedDB only');
+            return false;
+            
+            // Original code (commented out):
+            // if (window.location.protocol === 'file:') {
+            //     console.warn('🚨 Firestore disabled: Please run from a web server (http://localhost) for cloud sync');
+            //     return false;
+            // }
+            // return window.firebase && window.firebase.auth.currentUser;
+        }
+
+        /**
+         * Hybrid function to add goal - uses Firestore if authenticated, IndexedDB otherwise
+         */
+        async function addGoalToDatabase(goal) {
+            if (isFirestoreAvailable()) {
+                const firestoreSuccess = await addGoalToFirestore(goal);
+                if (firestoreSuccess) {
+                    return true;
+                }
+                console.log('Firestore failed, falling back to IndexedDB');
+            }
+            return await addGoalToDB(goal);
+        }
+
+        /**
+         * Hybrid function to get all goals - uses Firestore if authenticated, IndexedDB otherwise
+         */
+        async function getAllGoalsFromDatabase() {
+            if (isFirestoreAvailable()) {
+                try {
+                    return await getAllGoalsFromFirestore();
+                } catch (error) {
+                    console.log('Firestore failed, falling back to IndexedDB');
+                }
+            }
+            return await getAllGoalsFromDB();
+        }
+
+        /**
+         * Hybrid function to remove goal - uses Firestore if authenticated, IndexedDB otherwise
+         */
+        async function removeGoalFromDatabase(goalId) {
+            if (isFirestoreAvailable()) {
+                const firestoreSuccess = await removeGoalFromFirestore(goalId);
+                if (firestoreSuccess) {
+                    return true;
+                }
+                console.log('Firestore failed, falling back to IndexedDB');
+            }
+            return await removeGoalFromDB(goalId);
+        }
+
+        /**
+         * Hybrid function to save goal selection - uses Firestore if authenticated, IndexedDB otherwise
+         */
+        async function saveGoalSelectionToDatabase(goalId, selected) {
+            if (isFirestoreAvailable()) {
+                const firestoreSuccess = await saveGoalSelectionToFirestore(goalId, selected);
+                if (firestoreSuccess) {
+                    return true;
+                }
+                console.log('Firestore failed, falling back to IndexedDB');
+            }
+            return await saveGoalSelection(goalId, selected);
+        }
+
+        /**
+         * Hybrid function to get selected goal IDs - uses Firestore if authenticated, IndexedDB otherwise
+         */
+        async function getSelectedGoalIdsFromDatabase() {
+            if (isFirestoreAvailable()) {
+                try {
+                    return await getSelectedGoalIdsFromFirestore();
+                } catch (error) {
+                    console.log('Firestore failed, falling back to IndexedDB');
+                }
+            }
+            return await getSelectedGoalIds();
+        }
+
+        /**
+         * Migrate data from IndexedDB to Firestore when user logs in
+         */
+        async function migrateToFirestore() {
+            console.log('Starting migration from IndexedDB to Firestore...');
+            
+            try {
+                // Migrate goals
+                const localGoals = await getAllGoalsFromDB();
+                console.log(`Migrating ${localGoals.length} goals to Firestore...`);
+                
+                for (const goal of localGoals) {
+                    await addGoalToFirestore(goal);
+                }
+                
+                // Migrate selected goals
+                const localSelections = await getSelectedGoalIds();
+                console.log(`Migrating ${localSelections.length} selections to Firestore...`);
+                
+                for (const goalId of localSelections) {
+                    await saveGoalSelectionToFirestore(goalId, true);
+                }
+                
+                console.log('Migration to Firestore completed successfully!');
+                return true;
+            } catch (error) {
+                console.error('Error during migration to Firestore:', error);
+                return false;
+            }
+        }
+
+        /**
+         * Load data from Firestore when user logs in
+         */
+        async function loadFromFirestore() {
+            console.log('Loading user data from Firestore...');
+            
+            try {
+                // Load goals into masterGoalsList if empty or merge with existing
+                const firestoreGoals = await getAllGoalsFromFirestore();
+                if (firestoreGoals.length > 0) {
+                    // Merge with existing goals, avoiding duplicates
+                    firestoreGoals.forEach(firestoreGoal => {
+                        const existingIndex = masterGoalsList.findIndex(g => g.id === firestoreGoal.id);
+                        if (existingIndex >= 0) {
+                            // Update existing goal
+                            masterGoalsList[existingIndex] = firestoreGoal;
+                        } else {
+                            // Add new goal
+                            masterGoalsList.push(firestoreGoal);
+                        }
+                    });
+                    console.log(`Loaded ${firestoreGoals.length} goals from Firestore`);
+                }
+                
+                // Load selected goals and update UI
+                const selectedIds = await getSelectedGoalIdsFromDatabaseFromFirestore();
+                if (selectedIds.length > 0) {
+                    // Update button states
+                    selectedIds.forEach(goalId => {
+                        updateButtonStateFromGoalId(goalId, true);
+                    });
+                    
+                    // Refresh displays
+                    await populateGoalsList();
+                    await updateRequirements();
+                    
+                    console.log(`Loaded ${selectedIds.length} selected goals from Firestore`);
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Error loading from Firestore:', error);
+                return false;
+            }
+        }
 
         // ========== TO-DO LIST DATABASE ==========
         
@@ -3509,7 +4424,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 
                 // Save each selection to the database
                 for (const goalId of savedIds) {
-                    await saveGoalSelection(goalId, true);
+                    await saveGoalSelectionToDatabase(goalId, true);
                 }
                 
                 console.log('Migration completed successfully');
@@ -3567,26 +4482,28 @@ if (typeof module !== 'undefined' && module.exports) {
                 // Note: Quests are no longer auto-populated. They are created on-demand when manually added.
 
                 // Add Achievement Diaries to master list (if available)
-                if (window.ACHIEVEMENT_DIARIES_DATABASE) {
-                    for (const diary of Object.values(window.ACHIEVEMENT_DIARIES_DATABASE)) {
-                        for (const [index, task] of diary.tasks.entries()) {
-                            const goalId = `diary_${diary.id}_${index}`;
-                            if (!existingGoalIds.has(goalId)) {
-                                const requiredItems = extractRequiredItems([task.description]);
-                                const requiredSkills = extractRequiredSkills([task.description]);
-                                
-                                const goalData = {
-                                    id: goalId,
-                                    name: `${diary.name} - ${task.difficulty}: ${task.description}`,
-                                    category: 'Achievement Diary',
-                                    difficulty: task.difficulty,
+                if (typeof DIARIES_DATABASE !== 'undefined') {
+                    for (const diary of Object.values(DIARIES_DATABASE)) {
+                        for (const [difficultyKey, difficulty] of Object.entries(diary.difficulties)) {
+                            for (const [taskIndex, task] of difficulty.tasks.entries()) {
+                                const goalId = `diary_${diary.id}_${difficultyKey}_${taskIndex}`;
+                                if (!existingGoalIds.has(goalId)) {
+                                    const requiredItems = extractRequiredItems([task.description]);
+                                    const requiredSkills = extractRequiredSkills([task.description]);
+                                    
+                                    const goalData = {
+                                        id: goalId,
+                                        name: `${diary.name} - ${difficultyKey.charAt(0).toUpperCase() + difficultyKey.slice(1)}: ${task.description}`,
+                                        category: 'Achievement Diary',
+                                        difficulty: difficultyKey,
                                     requiredItems: requiredItems,
                                     requiredSkills: requiredSkills,
                                     region: diary.region
                                 };
                                 
                                 masterGoalsList.push(goalData);
-                                await addGoalToDB(goalData);
+                                await addGoalToDatabase(goalData);
+                                }
                             }
                         }
                     }
@@ -3611,7 +4528,7 @@ if (typeof module !== 'undefined' && module.exports) {
                             };
                             
                             masterGoalsList.push(goalData);
-                            await addGoalToDB(goalData);
+                            await addGoalToDatabase(goalData);
                         }
                     }
                 }
@@ -3673,28 +4590,33 @@ if (typeof module !== 'undefined' && module.exports) {
                 'Attack', 'Strength', 'Defence', 'Ranged', 'Prayer', 'Magic',
                 'Runecrafting', 'Construction', 'Hitpoints', 'Agility', 'Herblore',
                 'Thieving', 'Crafting', 'Fletching', 'Slayer', 'Hunter', 'Mining',
-                'Smithing', 'Fishing', 'Cooking', 'Firemaking', 'Woodcutting', 'Farming'
+                'Smithing', 'Fishing', 'Cooking', 'Firemaking', 'Woodcutting', 'Farming',
+                'Combat'
             ];
 
             if (!requirements || !Array.isArray(requirements)) return skills;
 
             requirements.forEach(req => {
                 if (typeof req === 'string') {
-                    // Look for patterns like "60 Mining", "Level 50 Magic", etc.
-                    const matches = req.match(/(\d+)\s+(\w+)|(\w+)\s+(\d+)|Level\s+(\d+)\s+(\w+)/gi);
+                    // Look for patterns like "60 Mining", "Level 50 Magic", "75+ Smithing", "85 Combat level", etc.
+                    const matches = req.match(/(\d+)\+?\s*(\w+)|(\w+)\s+(\d+)\+?|Level\s+(\d+)\+?\s*(\w+)|(\d+)\+?\s*(\w+)\s+level/gi);
                     if (matches) {
                         matches.forEach(match => {
                             skillNames.forEach(skillName => {
-                                if (match.toLowerCase().includes(skillName.toLowerCase())) {
+                                // Use word boundaries to avoid partial matches (e.g., "Crafting" in "Runecrafting")
+                                const skillRegex = new RegExp(`\\b${skillName.toLowerCase()}\\b`, 'i');
+                                if (skillRegex.test(match.toLowerCase())) {
                                     const levelMatch = match.match(/\d+/);
                                     if (levelMatch) {
                                         const level = parseInt(levelMatch[0]);
-                                        const existing = skills.find(s => s.skill === skillName);
+                                        // Normalize skill name to match the stats display system
+                                        const normalizedSkillName = skillName === 'Runecrafting' ? 'Runecraft' : skillName;
+                                        const existing = skills.find(s => s.skill === normalizedSkillName);
                                         if (!existing || existing.level < level) {
                                             if (existing) {
                                                 existing.level = level;
                                             } else {
-                                                skills.push({ skill: skillName, level: level });
+                                                skills.push({ skill: normalizedSkillName, level: level });
                                             }
                                         }
                                     }
@@ -3716,7 +4638,7 @@ if (typeof module !== 'undefined' && module.exports) {
             if (!container) return;
             
             // Get only selected goals
-            const selectedIds = await getSelectedGoalIds();
+            const selectedIds = await getSelectedGoalIdsFromDatabase();
             const selectedGoals = selectedIds.map(id => masterGoalsList.find(goal => goal.id === id)).filter(Boolean);
             
             if (selectedGoals.length === 0) {
@@ -3775,7 +4697,7 @@ if (typeof module !== 'undefined' && module.exports) {
          * Update the requirements display based on selected goals
          */
         async function updateRequirements() {
-            const selectedGoalIds = await getSelectedGoalIds();
+            const selectedGoalIds = await getSelectedGoalIdsFromDatabase();
             const container = document.querySelector('.requirements-grid');
             
             if (!container) {
@@ -3858,7 +4780,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 const selectedIds = Array.from(checkedGoals).map(cb => cb.dataset.goalId);
                 
                 // Get currently selected IDs from database
-                const currentlySelected = await getSelectedGoalIds();
+                const currentlySelected = await getSelectedGoalIdsFromDatabase();
                 
                 // Find goals to add and remove
                 const toAdd = selectedIds.filter(id => !currentlySelected.includes(id));
@@ -3866,10 +4788,10 @@ if (typeof module !== 'undefined' && module.exports) {
                 
                 // Update database
                 for (const goalId of toAdd) {
-                    await saveGoalSelection(goalId, true);
+                    await saveGoalSelectionToDatabase(goalId, true);
                 }
                 for (const goalId of toRemove) {
-                    await saveGoalSelection(goalId, false);
+                    await saveGoalSelectionToDatabase(goalId, false);
                 }
                 
                 console.log('To-Do list saved to database');
@@ -3936,7 +4858,7 @@ if (typeof module !== 'undefined' && module.exports) {
          */
         async function loadToDoList() {
             try {
-                const savedIds = await getSelectedGoalIds();
+                const savedIds = await getSelectedGoalIdsFromDatabase();
                 console.log('Loading selected goal IDs from database:', savedIds);
                 
                 // Update button states for selected goals
@@ -4047,8 +4969,7 @@ if (typeof module !== 'undefined' && module.exports) {
                         detailsElement.innerHTML = '';
                     }
                 } else if (type === 'diary') {
-                    const diary = window.ACHIEVEMENT_DIARIES_DATABASE ? 
-                                  Object.values(window.ACHIEVEMENT_DIARIES_DATABASE).find(d => d.id === itemId) : null;
+                    const diary = typeof getDiaryById !== 'undefined' ? getDiaryById(itemId) : null;
                     if (diary && diary.difficulties && diary.difficulties[difficulty] && 
                         diary.difficulties[difficulty].tasks[taskIndex]) {
                         const task = diary.difficulties[difficulty].tasks[taskIndex];
@@ -4195,7 +5116,7 @@ if (typeof module !== 'undefined' && module.exports) {
             
             try {
                 // Remove selection from database
-                await saveGoalSelection(goalId, false);
+                await saveGoalSelectionToDatabase(goalId, false);
                 
                 // Refresh the to-do list to remove the item from UI
                 await populateGoalsList();
@@ -4282,8 +5203,7 @@ if (typeof module !== 'undefined' && module.exports) {
                         };
                     }
                 } else if (type === 'diary') {
-                    const diary = window.ACHIEVEMENT_DIARIES_DATABASE ? 
-                                  Object.values(window.ACHIEVEMENT_DIARIES_DATABASE).find(d => d.id === itemId) : null;
+                    const diary = typeof getDiaryById !== 'undefined' ? getDiaryById(itemId) : null;
                     if (diary && diary.difficulties && diary.difficulties[difficulty] && 
                         diary.difficulties[difficulty].tasks[taskIndex]) {
                         const task = diary.difficulties[difficulty].tasks[taskIndex];
@@ -4324,8 +5244,8 @@ if (typeof module !== 'undefined' && module.exports) {
                     if (!existingGoal) {
                         // Goal doesn't exist in database, create it
                         masterGoalsList.push(newGoal);
-                        await addGoalToDB(newGoal);
-                        await saveGoalSelection(newGoal.id, true);
+                        await addGoalToDatabase(newGoal);
+                        await saveGoalSelectionToDatabase(newGoal.id, true);
                         console.log(`Created and added "${newGoal.name}" to To-Do list`);
                         showToDoFeedback('Added to To-Do list!', 'success');
                     } else {
@@ -4333,7 +5253,7 @@ if (typeof module !== 'undefined' && module.exports) {
                         if (!masterGoalsList.find(goal => goal.id === newGoal.id)) {
                             masterGoalsList.push(existingGoal);
                         }
-                        await saveGoalSelection(newGoal.id, true);
+                        await saveGoalSelectionToDatabase(newGoal.id, true);
                         console.log(`Selected existing "${newGoal.name}" for To-Do list`);
                         showToDoFeedback('Added to To-Do list!', 'success');
                     }
@@ -4452,7 +5372,7 @@ if (typeof module !== 'undefined' && module.exports) {
                     if (!item.querySelector('.add-to-todo-btn-small')) {
                         const button = document.createElement('button');
                         button.className = 'add-to-todo-btn add-to-todo-btn-small';
-                        button.textContent = '+';
+                        button.textContent = 'Journal';
                         button.onclick = () => openTodoModal('skill', skillName);
                         item.appendChild(button);
                     }
@@ -4521,6 +5441,363 @@ if (typeof module !== 'undefined' && module.exports) {
             setTimeout(addStatsButtons, 500);
         });
 
+        // Authentication Variables
+        let currentUser = null;
+        let isLoginMode = true;
+        
+        /**
+         * Initialize authentication system
+         */
+        function initializeAuth() {
+            if (!window.firebase) {
+                console.error('Firebase not loaded yet');
+                setTimeout(initializeAuth, 1000);
+                return;
+            }
+            
+            // Listen for authentication state changes
+            window.firebase.onAuthStateChanged(window.firebase.auth, async (user) => {
+                currentUser = user;
+                if (user) {
+                    // User is signed in
+                    showUserInfo(user);
+                    hideAuthModal();
+                    console.log('User signed in:', user.email);
+                    
+                    // Migrate local data to Firestore and load user data
+                    try {
+                        // First migrate any local data
+                        await migrateToFirestore();
+                        
+                        // Then load user data from Firestore
+                        await loadFromFirestore();
+                        
+                        // Load player stats
+                        await loadSavedPlayerStats();
+                        
+                        // Set up real-time sync
+                        setupRealtimeSync();
+                        
+                        console.log('User data synchronized with Firestore and real-time sync enabled');
+                    } catch (error) {
+                        console.error('Error synchronizing with Firestore:', error);
+                    }
+                } else {
+                    // User is signed out
+                    hideUserInfo();
+                    showAuthModal();
+                    console.log('User signed out');
+                    
+                    // Clean up real-time listeners
+                    cleanupRealtimeSync();
+                    
+                    // Load stats from localStorage for offline users
+                    await loadSavedPlayerStats();
+                    
+                    // Clear any user-specific data from memory
+                    // Keep masterGoalsList intact as it contains quest/diary definitions
+                }
+            });
+            
+            // Set up auth form handler
+            const authForm = document.getElementById('auth-form');
+            if (authForm) {
+                authForm.addEventListener('submit', handleAuthSubmit);
+            }
+        }
+        
+        /**
+         * Handle authentication form submission
+         */
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const submitButton = document.getElementById('auth-submit');
+            const errorDiv = document.getElementById('auth-error');
+            
+            // Disable submit button and show loading
+            submitButton.disabled = true;
+            submitButton.textContent = isLoginMode ? 'Logging in...' : 'Creating account...';
+            hideAuthError();
+            
+            try {
+                if (isLoginMode) {
+                    // Login
+                    await window.firebase.signInWithEmailAndPassword(window.firebase.auth, email, password);
+                } else {
+                    // Register
+                    await window.firebase.createUserWithEmailAndPassword(window.firebase.auth, email, password);
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                showAuthError(getAuthErrorMessage(error.code));
+            } finally {
+                // Re-enable submit button
+                submitButton.disabled = false;
+                submitButton.textContent = isLoginMode ? 'Login' : 'Register';
+            }
+        }
+        
+        /**
+         * Toggle between login and register modes
+         */
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            const title = document.getElementById('auth-title');
+            const submitButton = document.getElementById('auth-submit');
+            const toggleText = document.getElementById('auth-toggle-text');
+            const toggleLink = document.getElementById('auth-toggle-link');
+            
+            if (isLoginMode) {
+                title.textContent = 'Login to Iron Bible';
+                submitButton.textContent = 'Login';
+                toggleText.textContent = "Don't have an account?";
+                toggleLink.textContent = 'Create a user account';
+            } else {
+                title.textContent = 'Create Iron Bible Account';
+                submitButton.textContent = 'Create Account';
+                toggleText.textContent = 'Already have an account?';
+                toggleLink.textContent = 'Login here';
+            }
+            
+            // Clear form and hide errors
+            document.getElementById('auth-form').reset();
+            hideAuthError();
+        }
+        
+        /**
+         * Logout function
+         */
+        async function logout() {
+            try {
+                await window.firebase.signOut(window.firebase.auth);
+            } catch (error) {
+                console.error('Error logging out:', error);
+            }
+        }
+        
+        /**
+         * Show authentication modal
+         */
+        function showAuthModal() {
+            document.getElementById('auth-container').style.display = 'flex';
+        }
+        
+        /**
+         * Hide authentication modal
+         */
+        function hideAuthModal() {
+            document.getElementById('auth-container').style.display = 'none';
+        }
+        
+        /**
+         * Show user info
+         */
+        function showUserInfo(user) {
+            const userInfo = document.getElementById('user-info');
+            const userEmail = document.getElementById('user-email');
+            if (userEmail) {
+                userEmail.textContent = user.email;
+                userInfo.style.display = 'flex';
+            }
+            
+            // Show user greeting in header
+            const userGreeting = document.getElementById('user-greeting');
+            const userNickname = document.getElementById('user-nickname');
+            if (userGreeting && userNickname) {
+                // Extract nickname from email (part before @)
+                const nickname = user.email.split('@')[0];
+                userNickname.textContent = nickname;
+                userGreeting.style.display = 'block';
+            }
+        }
+        
+        /**
+         * Hide user info
+         */
+        function hideUserInfo() {
+            const userInfo = document.getElementById('user-info');
+            if (userInfo) {
+                userInfo.style.display = 'none';
+            }
+            
+            // Hide user greeting in header
+            const userGreeting = document.getElementById('user-greeting');
+            if (userGreeting) {
+                userGreeting.style.display = 'none';
+            }
+        }
+        
+        /**
+         * Show authentication error
+         */
+        function showAuthError(message) {
+            const errorDiv = document.getElementById('auth-error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        /**
+         * Hide authentication error
+         */
+        function hideAuthError() {
+            document.getElementById('auth-error').style.display = 'none';
+        }
+        
+        /**
+         * Get user-friendly error messages
+         */
+        function getAuthErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/user-not-found':
+                    return 'No account found with this email address.';
+                case 'auth/wrong-password':
+                    return 'Incorrect password.';
+                case 'auth/email-already-in-use':
+                    return 'An account with this email already exists.';
+                case 'auth/weak-password':
+                    return 'Password should be at least 6 characters.';
+                case 'auth/invalid-email':
+                    return 'Please enter a valid email address.';
+                case 'auth/too-many-requests':
+                    return 'Too many failed attempts. Please try again later.';
+                default:
+                    return 'An error occurred. Please try again.';
+            }
+        }
+
+        // Hamburger menu functions
+        function toggleDropdown() {
+            const dropdown = document.getElementById('dropdown-menu');
+            dropdown.classList.toggle('show');
+        }
+
+        function openProfile() {
+            alert('Local Profile Settings\n\nCurrently running in local-only mode using IndexedDB.\n\nYour data is stored locally in your browser:\n• Player stats in localStorage\n• Goals and selections in IndexedDB\n\nTo enable cloud sync, run from a web server (http://localhost).');
+        }
+
+        function openImportExport() {
+            alert('Local Data Management\n\nRunning in IndexedDB-only mode.\n\nData stored locally:\n• Goals & Selections: Browser IndexedDB\n• Player Stats: Browser localStorage\n\nTo backup data, bookmark your current goals or take screenshots.\nCloud backup available when running from web server.');
+        }
+
+        function openHelp() {
+            alert('Help & Tutorial - Coming Soon!\nThis feature will provide comprehensive guides for using the Iron Bible app.');
+        }
+
+        function openAbout() {
+            alert('About Iron Bible\n\nIron Bible is your comprehensive companion for Old School RuneScape.\n\nFeatures:\n• Quest tracking and planning\n• Achievement diary progress\n• Skill requirements calculator\n• Personal to-do lists\n• Stats tracking with Hiscores integration\n\nBuilt with ❤️ for the OSRS community');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const hamburgerMenu = document.querySelector('.hamburger-menu');
+            const dropdown = document.getElementById('dropdown-menu');
+            
+            if (!hamburgerMenu.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Test function for + sign parsing
+        function testPlusSignParsing() {
+            const testRequirements = [
+                '75+ Magic',
+                '70+ Firemaking', 
+                '62+ Runecrafting',
+                '85 Combat level',
+                'Level 60+ Agility'
+            ];
+            
+            console.log('Testing + sign parsing:');
+            const result = extractRequiredSkills(testRequirements);
+            console.log('Input requirements:', testRequirements);
+            console.log('Parsed skills:', result);
+            return result;
+        }
+
+        // Test function specifically for Desert Treasure II
+        function testDesertTreasureII() {
+            console.log('Testing Desert Treasure II parsing:');
+            if (typeof QUESTS_DATABASE !== 'undefined' && QUESTS_DATABASE['desert-treasure-ii']) {
+                const quest = QUESTS_DATABASE['desert-treasure-ii'];
+                console.log('Quest found:', quest.name);
+                console.log('Quest requirements:', quest.requirements);
+                const skills = extractRequiredSkills(quest.requirements);
+                console.log('Parsed skills:', skills);
+                return { quest, skills };
+            } else {
+                console.log('Desert Treasure II quest not found in database');
+                return null;
+            }
+        }
+
+        // Debug function to check current todo list state
+        async function debugTodoList() {
+            console.log('=== DEBUG TODO LIST ===');
+            
+            // Check selected goal IDs
+            const selectedIds = await getSelectedGoalIdsFromDatabase();
+            console.log('Selected goal IDs:', selectedIds);
+            
+            // Check masterGoalsList for Desert Treasure II
+            const dtQuest = masterGoalsList.find(g => g.id === 'quest_desert-treasure-ii');
+            if (dtQuest) {
+                console.log('Desert Treasure II goal found in masterGoalsList:');
+                console.log('- Name:', dtQuest.name);
+                console.log('- Required Skills:', dtQuest.requiredSkills);
+                console.log('- Full goal object:', dtQuest);
+            } else {
+                console.log('Desert Treasure II goal NOT found in masterGoalsList');
+                console.log('Available quest goals:', masterGoalsList.filter(g => g.category === 'Quest').map(g => g.id));
+            }
+            
+            return { selectedIds, dtQuest };
+        }
+
+        // Manual function to trigger requirements update
+        async function manualUpdateRequirements() {
+            console.log('Manually triggering requirements update...');
+            await updateRequirements();
+        }
+
+        // Force refresh masterGoalsList to pick up parsing fixes
+        async function forceRefreshQuests() {
+            console.log('Force refreshing quest goals...');
+            
+            // Remove existing quest goals from masterGoalsList
+            masterGoalsList = masterGoalsList.filter(goal => !goal.id.startsWith('quest_'));
+            
+            // Re-add quest goals with fixed parsing
+            if (typeof QUESTS_DATABASE !== 'undefined') {
+                for (const [questId, quest] of Object.entries(QUESTS_DATABASE)) {
+                    const requiredItems = extractRequiredItems(quest.requirements || []);
+                    const requiredSkills = extractRequiredSkills(quest.requirements || []);
+                    
+                    const goalData = {
+                        id: `quest_${questId}`,
+                        name: quest.name,
+                        category: quest.miniquest ? 'Miniquest' : 'Quest',
+                        difficulty: quest.difficulty,
+                        requiredItems: requiredItems,
+                        requiredSkills: requiredSkills,
+                        questPoints: quest.quest_points
+                    };
+                    
+                    masterGoalsList.push(goalData);
+                    
+                    // Update in database too
+                    await addGoalToDatabase(goalData);
+                }
+            }
+            
+            console.log('Quest goals refreshed. Desert Treasure II should now have correct skills.');
+            
+            // Trigger requirements update
+            await updateRequirements();
+        }
+
         // Expose functions to global scope for debugging
         window.populateMasterGoalsList = populateMasterGoalsList;
         window.initializeToDoTab = initializeToDoTab;
@@ -4534,6 +5811,86 @@ if (typeof module !== 'undefined' && module.exports) {
         window.getCurrentSkillLevel = getCurrentSkillLevel;
         window.updateButtonStateFromGoalId = updateButtonStateFromGoalId;
         window.recreateCustomSkillGoals = recreateCustomSkillGoals;
+        window.initializeAuth = initializeAuth;
+        window.toggleAuthMode = toggleAuthMode;
+        window.logout = logout;
+        window.toggleDropdown = toggleDropdown;
+        window.openProfile = openProfile;
+        window.openImportExport = openImportExport;
+        window.openHelp = openHelp;
+        window.openAbout = openAbout;
+        window.testPlusSignParsing = testPlusSignParsing;
+        window.testDesertTreasureII = testDesertTreasureII;
+        window.debugTodoList = debugTodoList;
+        window.manualUpdateRequirements = manualUpdateRequirements;
+        window.forceRefreshQuests = forceRefreshQuests;
+        window.extractRequiredSkills = extractRequiredSkills;
+        
+        // Test function to check if stats are in Firestore
+        window.checkStatsInFirestore = async function() {
+            try {
+                const stats = await getStatsFromFirestore();
+                console.log('Stats in Firestore:', stats);
+                return stats;
+            } catch (error) {
+                console.error('Error checking stats:', error);
+                return null;
+            }
+        };
+
+        // Test Firestore connection
+        window.testFirestoreConnection = async function() {
+            try {
+                console.log('Testing Firestore connection...');
+                
+                if (!window.firebase.auth.currentUser) {
+                    console.log('❌ No authenticated user - please log in first');
+                    return false;
+                }
+                
+                const userId = window.firebase.auth.currentUser.uid;
+                console.log('✅ User authenticated:', userId);
+                
+                // Try a simple read operation
+                const testRef = window.firebase.doc(window.firebase.db, `users/${userId}/test`, 'connection');
+                const doc = await window.firebase.getDoc(testRef);
+                console.log('✅ Firestore read test successful');
+                
+                // Try a simple write operation
+                await window.firebase.setDoc(testRef, {
+                    test: true,
+                    timestamp: new Date(),
+                    message: 'Connection test successful'
+                });
+                console.log('✅ Firestore write test successful');
+                
+                // Clean up test document
+                await window.firebase.deleteDoc(testRef);
+                console.log('✅ Firestore delete test successful');
+                
+                console.log('🎉 All Firestore operations working correctly!');
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Firestore connection test failed:', error);
+                console.error('Error details:', {
+                    code: error.code,
+                    message: error.message,
+                    name: error.name
+                });
+                
+                // Check for common issues
+                if (error.code === 'permission-denied') {
+                    console.log('💡 This might be a Firestore Security Rules issue');
+                } else if (error.message?.includes('CORS')) {
+                    console.log('💡 This might be a CORS issue - try running from a web server');
+                } else if (error.message?.includes('network')) {
+                    console.log('💡 This might be a network connectivity issue');
+                }
+                
+                return false;
+            }
+        };
     </script>
 
     <!-- Add to To-Do List Modal -->
@@ -4588,6 +5945,29 @@ if (typeof module !== 'undefined' && module.exports) {
                 <button class="modal-button modal-confirm modal-remove" onclick="confirmRemoveGoal()">Remove from To-Do List</button>
             </div>
         </div>
+    </div>
+    
+    <!-- Authentication Modal -->
+    <div id="auth-container" class="auth-container" style="display: none;">
+        <div class="auth-modal">
+            <h2 id="auth-title">Login to Iron Bible</h2>
+            <form id="auth-form" class="auth-form">
+                <div id="auth-error" class="auth-error" style="display: none;"></div>
+                <input type="email" id="auth-email" class="auth-input" placeholder="Email" required>
+                <input type="password" id="auth-password" class="auth-input" placeholder="Password" required>
+                <button type="submit" id="auth-submit" class="auth-button">Login</button>
+            </form>
+            <div class="auth-toggle">
+                <span id="auth-toggle-text">Don't have an account?</span>
+                <a id="auth-toggle-link" onclick="toggleAuthMode()">Create a user account</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Info Display -->
+    <div id="user-info" class="user-info" style="display: none;">
+        <span id="user-email"></span>
+        <button onclick="logout()" class="logout-btn">Logout</button>
     </div>
 </body>
 </html>
