@@ -262,7 +262,9 @@
          */
         async function fetchPlayerDataWithProxy(username) {
             // Multiple CORS proxy fallbacks
+            // Use Cloudflare Pages Function as primary proxy, with fallbacks
             const proxies = [
+                '/api/proxy?url=',  // Our Cloudflare Pages Function (primary)
                 'https://corsproxy.io/?',
                 'https://proxy.cors.sh/',
                 'https://api.allorigins.win/raw?url=',
@@ -5054,7 +5056,9 @@ if (typeof module !== 'undefined' && module.exports) {
          */
         async function fetchGroupDataWithProxy(groupName) {
             // Multiple CORS proxy fallbacks (same as player lookup)
+            // Use Cloudflare Pages Function as primary proxy, with fallbacks
             const proxies = [
+                '/api/proxy?url=',  // Our Cloudflare Pages Function (primary)
                 'https://corsproxy.io/?',
                 'https://proxy.cors.sh/',
                 'https://api.allorigins.win/raw?url=',
