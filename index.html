@@ -3378,7 +3378,7 @@
                         <div class="lookup-section">
                             <input type="text" id="username-input" placeholder="Enter OSRS username" />
                             <button id="lookup-btn" onclick="lookupPlayer()">Lookup Player</button>
-                            <button id="runelite-sync-btn" onclick="triggerRuneLiteSync()" title="Sync quest and diary progress from RuneLite">Sync RuneLite</button>
+                            <button id="runelite-sync-btn" onclick="triggerRuneLiteSync()" title="Sync quest and diary progress from RuneLite HTTP Server">Sync RuneLite</button>
                         </div>
                         
                         <div class="stats-grid">
@@ -7809,24 +7809,72 @@ if (typeof module !== 'undefined' && module.exports) {
         // ========== RUNELITE WEBHOOK INTEGRATION ==========
         
         /**
-         * Sync quest progress from RuneLite webhook data
+         * Sync quest progress from RuneLite HTTP Server
          */
         async function syncRuneLiteQuestProgress(playerName) {
             try {
-                const response = await fetch(`/api/runelite-webhook?player=${encodeURIComponent(playerName)}&type=quest`);
-                const data = await response.json();
+                // Try multiple ports that WikiSync/HTTP Server might use
+                const ports = [37767, 37768, 37769, 37770, 37771, 37772, 37773, 37774, 37775, 37776];
                 
-                if (data.data && data.data.length > 0) {
-                    console.log(`Found ${data.data.length} quest completions from RuneLite for ${playerName}`);
-                    
-                    // Update quest progress in the UI
-                    data.data.forEach(questData => {
-                        updateQuestProgressFromWebhook(questData);
-                    });
-                    
-                    return data.data;
+                for (const port of ports) {
+                    try {
+                        console.log(`Trying RuneLite HTTP Server on port ${port}...`);
+                        
+                        // Try different endpoint patterns
+                        const endpoints = [
+                            `http://localhost:${port}/quests`,
+                            `http://localhost:${port}/quest`,
+                            `http://localhost:${port}/api/quests`,
+                            `http://localhost:${port}/player/quests`,
+                            `http://localhost:${port}/achievement-diaries/quests`
+                        ];
+                        
+                        for (const endpoint of endpoints) {
+                            try {
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                                
+                                const response = await fetch(endpoint, {
+                                    method: 'GET',
+                                    signal: controller.signal
+                                });
+                                
+                                clearTimeout(timeoutId);
+                                
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    console.log(`✅ Connected to RuneLite HTTP Server on ${endpoint}`);
+                                    console.log('Quest data:', data);
+                                    
+                                    // Process quest data
+                                    if (data && (Array.isArray(data) || typeof data === 'object')) {
+                                        const questCompletions = parseRuneLiteQuestData(data);
+                                        
+                                        // Update quest progress in the UI
+                                        questCompletions.forEach(questData => {
+                                            updateQuestProgressFromRuneLite(questData);
+                                        });
+                                        
+                                        return questCompletions;
+                                    }
+                                }
+                            } catch (endpointError) {
+                                // Try next endpoint
+                                continue;
+                            }
+                        }
+                    } catch (portError) {
+                        // Try next port
+                        continue;
+                    }
                 }
+                
+                console.log('❌ Could not connect to RuneLite HTTP Server. Make sure:');
+                console.log('1. RuneLite is running');
+                console.log('2. HTTP Server plugin is enabled');
+                console.log('3. WikiSync plugin is installed and active');
                 return [];
+                
             } catch (error) {
                 console.error('Error syncing RuneLite quest progress:', error);
                 return [];
@@ -7834,24 +7882,70 @@ if (typeof module !== 'undefined' && module.exports) {
         }
         
         /**
-         * Sync diary progress from RuneLite webhook data
+         * Sync diary progress from RuneLite HTTP Server
          */
         async function syncRuneLiteDiaryProgress(playerName) {
             try {
-                const response = await fetch(`/api/runelite-webhook?player=${encodeURIComponent(playerName)}&type=diary`);
-                const data = await response.json();
+                // Try multiple ports that WikiSync/HTTP Server might use
+                const ports = [37767, 37768, 37769, 37770, 37771, 37772, 37773, 37774, 37775, 37776];
                 
-                if (data.data && data.data.length > 0) {
-                    console.log(`Found ${data.data.length} diary completions from RuneLite for ${playerName}`);
-                    
-                    // Update diary progress in the UI
-                    data.data.forEach(diaryData => {
-                        updateDiaryProgressFromWebhook(diaryData);
-                    });
-                    
-                    return data.data;
+                for (const port of ports) {
+                    try {
+                        console.log(`Trying RuneLite HTTP Server on port ${port} for diaries...`);
+                        
+                        // Try different endpoint patterns for achievement diaries
+                        const endpoints = [
+                            `http://localhost:${port}/achievement-diaries`,
+                            `http://localhost:${port}/diaries`,
+                            `http://localhost:${port}/api/achievement-diaries`,
+                            `http://localhost:${port}/api/diaries`,
+                            `http://localhost:${port}/player/achievement-diaries`,
+                            `http://localhost:${port}/player/diaries`
+                        ];
+                        
+                        for (const endpoint of endpoints) {
+                            try {
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                                
+                                const response = await fetch(endpoint, {
+                                    method: 'GET',
+                                    signal: controller.signal
+                                });
+                                
+                                clearTimeout(timeoutId);
+                                
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    console.log(`✅ Connected to RuneLite HTTP Server for diaries on ${endpoint}`);
+                                    console.log('Diary data:', data);
+                                    
+                                    // Process diary data
+                                    if (data && (Array.isArray(data) || typeof data === 'object')) {
+                                        const diaryCompletions = parseRuneLiteDiaryData(data);
+                                        
+                                        // Update diary progress in the UI
+                                        diaryCompletions.forEach(diaryData => {
+                                            updateDiaryProgressFromRuneLite(diaryData);
+                                        });
+                                        
+                                        return diaryCompletions;
+                                    }
+                                }
+                            } catch (endpointError) {
+                                // Try next endpoint
+                                continue;
+                            }
+                        }
+                    } catch (portError) {
+                        // Try next port
+                        continue;
+                    }
                 }
+                
+                console.log('❌ Could not connect to RuneLite HTTP Server for diaries');
                 return [];
+                
             } catch (error) {
                 console.error('Error syncing RuneLite diary progress:', error);
                 return [];
@@ -7859,9 +7953,98 @@ if (typeof module !== 'undefined' && module.exports) {
         }
         
         /**
-         * Update quest progress based on webhook data
+         * Parse quest data from RuneLite HTTP Server
          */
-        function updateQuestProgressFromWebhook(questData) {
+        function parseRuneLiteQuestData(data) {
+            const questCompletions = [];
+            
+            try {
+                // Handle different data structures that RuneLite might return
+                if (Array.isArray(data)) {
+                    // Array of quest objects
+                    data.forEach(quest => {
+                        if (quest.completed || quest.state === 'FINISHED' || quest.status === 'completed') {
+                            questCompletions.push({
+                                questName: quest.name || quest.questName || quest.title,
+                                completed: true,
+                                source: 'runelite-http-server'
+                            });
+                        }
+                    });
+                } else if (typeof data === 'object') {
+                    // Object with quest properties
+                    Object.keys(data).forEach(questKey => {
+                        const quest = data[questKey];
+                        if (quest && (quest.completed || quest.state === 'FINISHED' || quest.status === 'completed')) {
+                            questCompletions.push({
+                                questName: quest.name || questKey,
+                                completed: true,
+                                source: 'runelite-http-server'
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error parsing RuneLite quest data:', error);
+            }
+            
+            return questCompletions;
+        }
+        
+        /**
+         * Parse diary data from RuneLite HTTP Server
+         */
+        function parseRuneLiteDiaryData(data) {
+            const diaryCompletions = [];
+            
+            try {
+                // Handle different data structures for achievement diaries
+                if (Array.isArray(data)) {
+                    data.forEach(diary => {
+                        if (diary.tasks) {
+                            diary.tasks.forEach(task => {
+                                if (task.completed || task.state === 'FINISHED') {
+                                    diaryCompletions.push({
+                                        diaryName: diary.name || diary.area,
+                                        taskName: task.name || task.description,
+                                        difficulty: diary.difficulty || task.difficulty || 'unknown',
+                                        completed: true,
+                                        source: 'runelite-http-server'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                } else if (typeof data === 'object') {
+                    Object.keys(data).forEach(diaryKey => {
+                        const diary = data[diaryKey];
+                        if (diary && diary.tasks) {
+                            Object.keys(diary.tasks).forEach(taskKey => {
+                                const task = diary.tasks[taskKey];
+                                if (task && (task.completed || task.state === 'FINISHED')) {
+                                    diaryCompletions.push({
+                                        diaryName: diary.name || diaryKey,
+                                        taskName: task.name || taskKey,
+                                        difficulty: task.difficulty || 'unknown',
+                                        completed: true,
+                                        source: 'runelite-http-server'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error parsing RuneLite diary data:', error);
+            }
+            
+            return diaryCompletions;
+        }
+        
+        /**
+         * Update quest progress based on RuneLite HTTP Server data
+         */
+        function updateQuestProgressFromRuneLite(questData) {
             // Find quest element by name and mark as completed
             const questElements = document.querySelectorAll('.quest-item');
             questElements.forEach(element => {
@@ -7876,16 +8059,16 @@ if (typeof module !== 'undefined' && module.exports) {
                         const questId = checkbox.getAttribute('data-quest-id') || questData.questName;
                         saveGoalSelection(questId, true);
                         
-                        console.log(`✅ Quest completed via RuneLite: ${questData.questName}`);
+                        console.log(`✅ Quest completed via RuneLite HTTP Server: ${questData.questName}`);
                     }
                 }
             });
         }
         
         /**
-         * Update diary progress based on webhook data
+         * Update diary progress based on RuneLite HTTP Server data
          */
-        function updateDiaryProgressFromWebhook(diaryData) {
+        function updateDiaryProgressFromRuneLite(diaryData) {
             // Find diary task element and mark as completed
             const diaryElements = document.querySelectorAll('.diary-task');
             diaryElements.forEach(element => {
@@ -7900,7 +8083,7 @@ if (typeof module !== 'undefined' && module.exports) {
                         const taskId = checkbox.getAttribute('data-task-id') || diaryData.taskName;
                         saveGoalSelection(taskId, true);
                         
-                        console.log(`✅ Diary task completed via RuneLite: ${diaryData.diaryName} - ${diaryData.taskName}`);
+                        console.log(`✅ Diary task completed via RuneLite HTTP Server: ${diaryData.diaryName} - ${diaryData.taskName}`);
                     }
                 }
             });
@@ -7934,17 +8117,42 @@ if (typeof module !== 'undefined' && module.exports) {
             }
             
             try {
-                const questData = await syncRuneLiteQuestProgress(playerName);
-                const diaryData = await syncRuneLiteDiaryProgress(playerName);
+                // Check if we're running locally or on Cloudflare
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 
-                const totalSynced = questData.length + diaryData.length;
-                if (totalSynced > 0) {
-                    alert(`✅ Synced ${totalSynced} completions from RuneLite (${questData.length} quests, ${diaryData.length} diary tasks)`);
+                if (isLocal) {
+                    // Local mode: Try to connect to RuneLite HTTP Server
+                    alert(`🔍 Scanning for RuneLite HTTP Server...\n\nMake sure:\n1. RuneLite is running\n2. HTTP Server plugin is enabled\n3. Your character is logged in\n\nNote: CORS may block this locally. Try on Cloudflare deployment for best results.`);
+                    
+                    const questData = await syncRuneLiteQuestProgress(playerName);
+                    const diaryData = await syncRuneLiteDiaryProgress(playerName);
+                    
+                    const totalSynced = questData.length + diaryData.length;
+                    if (totalSynced > 0) {
+                        alert(`✅ Synced ${totalSynced} completions from RuneLite HTTP Server (${questData.length} quests, ${diaryData.length} diary tasks)`);
+                    } else {
+                        alert('ℹ️ Could not connect to RuneLite HTTP Server or no completions found.\n\nTry:\n1. Enable HTTP Server plugin in RuneLite\n2. Use Chrome with --disable-web-security for testing\n3. Test on Cloudflare Pages deployment');
+                    }
                 } else {
-                    alert('ℹ️ No new completions found in RuneLite data');
+                    // Cloudflare mode: Use webhook data
+                    const questData = await syncRuneLiteQuestProgress(playerName);
+                    const diaryData = await syncRuneLiteDiaryProgress(playerName);
+                    
+                    const totalSynced = questData.length + diaryData.length;
+                    if (totalSynced > 0) {
+                        alert(`✅ Synced ${totalSynced} completions from stored webhook data (${questData.length} quests, ${diaryData.length} diary tasks)`);
+                    } else {
+                        alert('ℹ️ No completions found in webhook data.\n\nTo populate data:\n1. Use RuneLite plugin that sends webhooks\n2. Send test data via /api/test-webhook\n3. Complete quests/diaries with webhook plugin active');
+                    }
                 }
             } catch (error) {
-                alert(`❌ Error syncing RuneLite data: ${error.message}`);
+                console.error('RuneLite sync error:', error);
+                
+                if (error.message.includes('CORS')) {
+                    alert(`❌ CORS Error: ${error.message}\n\nSolutions:\n1. Use Cloudflare Pages deployment\n2. Start Chrome with --disable-web-security\n3. Use RuneLite webhook plugins instead`);
+                } else {
+                    alert(`❌ Error syncing RuneLite data: ${error.message}`);
+                }
             } finally {
                 if (button) {
                     button.textContent = 'Sync RuneLite';
