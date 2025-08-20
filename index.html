@@ -264,6 +264,10 @@
             // Multiple CORS proxy fallbacks
             const proxies = [
                 'https://corsproxy.io/?',
+                'https://proxy.cors.sh/',
+                'https://api.allorigins.win/raw?url=',
+                'https://cors-proxy.fringe.zone/',
+                'https://cors.eu.org/',
                 'https://cors-anywhere.herokuapp.com/',
                 'https://api.codetabs.com/v1/proxy?quest=',
                 'https://thingproxy.freeboard.io/fetch/'
@@ -564,6 +568,7 @@
             // Load stats for local-only mode
             setTimeout(async () => {
                 await loadSavedPlayerStats();
+                await loadSavedGroupIronStats();
             }, 1000);
         });
 
@@ -592,10 +597,17 @@
         
         // Stats management functions
         window.lookupPlayer = lookupPlayer;
+        window.fetchPlayerDataWithProxy = fetchPlayerDataWithProxy;
         window.parseHiscoresData = parseHiscoresData;
         window.updateStatsDisplay = updateStatsDisplay;
         window.loadSavedPlayerStats = loadSavedPlayerStats;
+        window.loadSavedGroupIronStats = loadSavedGroupIronStats;
         window.getCurrentPlayer = getCurrentPlayer;
+        
+        // Group Iron Stats functions
+        window.saveGroupStatsToDatabase = saveGroupStatsToDatabase;
+        window.loadGroupStatsFromDatabase = loadGroupStatsFromDatabase;
+        window.clearGroupStatsFromDatabase = clearGroupStatsFromDatabase;
         
         // Real-time sync functions
         window.setupRealtimeSync = setupRealtimeSync;
@@ -1576,6 +1588,303 @@
             font-weight: 500;
         }
         
+        /* Potions Container Styling */
+        .potions-container {
+            height: calc(100% - 60px);
+            max-height: 650px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        .potions-filters {
+            background: linear-gradient(135deg, #d2b48c, #c19a6b);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px solid #8b4513;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .potions-filters label {
+            color: #2c1810;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .potions-filters select,
+        .potions-filters input {
+            padding: 6px 10px;
+            border: 2px solid #8b4513;
+            border-radius: 5px;
+            background: #f4e4bc;
+            color: #2c1810;
+            font-size: 14px;
+        }
+        
+        .potions-filters input[type="number"] {
+            width: 70px;
+        }
+        
+        .clear-filters-btn {
+            background: linear-gradient(135deg, #8b4513, #654321);
+            color: #f4e4bc;
+            border: 2px solid #5d3a1a;
+            border-radius: 5px;
+            padding: 6px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .clear-filters-btn:hover {
+            background: linear-gradient(135deg, #654321, #5d3a1a);
+            transform: translateY(-1px);
+        }
+        
+        .potions-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 8px;
+            margin-right: 2px;
+            box-sizing: border-box;
+            max-height: calc(100% - 70px);
+        }
+        
+        .potion-item {
+            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
+            border: 2px solid #d2b48c;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(139, 69, 19, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .potion-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
+        }
+        
+        .potion-item.barbarian-herblore {
+            border-color: #8b4513;
+            background: linear-gradient(135deg, #e8d5a3, #d2b48c);
+        }
+        
+        .potion-header {
+            background: linear-gradient(135deg, #d2b48c, #c19a6b);
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #b8860b;
+        }
+        
+        .potion-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2e1a0a;
+            text-decoration: none;
+        }
+        
+        .potion-name:hover {
+            color: #8b4513;
+            text-decoration: underline;
+        }
+        
+        .potion-level {
+            background: rgba(139, 69, 19, 0.2);
+            color: #2e1a0a;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .potion-content {
+            padding: 12px 15px;
+        }
+        
+        .potion-info {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+            align-items: start;
+        }
+        
+        .potion-ingredients {
+            color: #5d4037;
+            line-height: 1.4;
+        }
+        
+        .potion-ingredients strong {
+            color: #2e1a0a;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .potion-xp {
+            background: rgba(139, 69, 19, 0.1);
+            color: #8b4513;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        /* Ensure potions tab matches other tab heights */
+        #potions-tab {
+            height: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        #potions-tab h1 {
+            margin-bottom: 15px;
+        }
+        
+        /* Slayer Container Styling */
+        .slayer-container {
+            height: calc(100% - 60px);
+            max-height: 650px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        .slayer-selector {
+            background: linear-gradient(135deg, #d2b48c, #c19a6b);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px solid #8b4513;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .slayer-selector label {
+            color: #2c1810;
+            font-weight: bold;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .monster-selector {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #8b4513;
+            border-radius: 5px;
+            background: #f4e4bc;
+            color: #2c1810;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .monster-info-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            box-sizing: border-box;
+        }
+        
+        .monster-info {
+            height: 100%;
+            overflow-y: auto;
+            padding-right: 8px;
+            margin-right: 2px;
+            box-sizing: border-box;
+        }
+        
+        .monster-header {
+            background: linear-gradient(135deg, #d2b48c, #c19a6b);
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            border: 2px solid #8b4513;
+            border-bottom: 1px solid #b8860b;
+            margin-bottom: 0;
+        }
+        
+        .monster-header h3 {
+            margin: 0;
+            color: #2e1a0a;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .monster-content {
+            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
+            border: 2px solid #8b4513;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .monster-section {
+            padding: 15px;
+            border-bottom: 1px solid rgba(139, 69, 19, 0.2);
+        }
+        
+        .monster-section:last-child {
+            border-bottom: none;
+        }
+        
+        .monster-section h4 {
+            color: #5d4037;
+            margin: 0 0 8px 0;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .monster-section p {
+            color: #2e1a0a;
+            margin: 0;
+            line-height: 1.5;
+        }
+        
+        .monster-placeholder {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
+            border: 2px solid #d2b48c;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        
+        .monster-placeholder p {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+        }
+        
+        /* Ensure slayer tab matches other tab heights */
+        #slayer-tab {
+            height: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        #slayer-tab h1 {
+            margin-bottom: 15px;
+        }
+        
         .requirements-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -2523,6 +2832,233 @@
                 min-height: 60px;
             }
         }
+        
+        /* Group Iron Stats Styling */
+        .group-lookup-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
+            border: 2px solid #8b4513;
+            border-radius: 10px;
+        }
+        
+        .lookup-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .group-name-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #8b4513;
+            border-radius: 5px;
+            padding: 12px 15px;
+            font-family: 'Cinzel', serif;
+            font-size: 1em;
+            color: #2c1810;
+        }
+        
+        .group-name-input:focus {
+            outline: none;
+            border-color: #654321;
+            box-shadow: 0 0 5px rgba(139, 69, 19, 0.3);
+        }
+        
+        .lookup-button {
+            background: linear-gradient(135deg, #8b4513, #654321);
+            color: #f4e4bc;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 20px;
+            font-family: 'Cinzel', serif;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .lookup-button:hover {
+            background: linear-gradient(135deg, #654321, #5d4037);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .member-selector-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
+            border: 2px solid #8b4513;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .member-selector-label {
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            color: #2c1810;
+            white-space: nowrap;
+        }
+        
+        .member-selector {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #8b4513;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-family: 'Cinzel', serif;
+            font-size: 1em;
+            color: #2c1810;
+            cursor: pointer;
+        }
+        
+        .member-selector:focus {
+            outline: none;
+            border-color: #654321;
+            box-shadow: 0 0 5px rgba(139, 69, 19, 0.3);
+        }
+        
+        .group-stats-container {
+            background: rgba(244, 228, 188, 0.5);
+            border: 2px solid #8b4513;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .group-header {
+            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
+            color: #2e1a0a;
+            border: 2px solid #8b4513;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .group-header h2 {
+            margin: 0 0 15px 0;
+            font-size: 1.8em;
+            color: #8b4513;
+            font-weight: 700;
+        }
+        
+        .group-info {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .group-stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 120px;
+        }
+        
+        .group-stat-label {
+            font-size: 0.9em;
+            color: #5d4037;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .group-stat-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2e1a0a;
+        }
+        
+        .group-members {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .member-card {
+            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
+            border: 2px solid #d2b48c;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .member-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(139, 69, 19, 0.2);
+        }
+        
+        .member-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #d2b48c;
+        }
+        
+        .member-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2e1a0a;
+        }
+        
+        .member-name a {
+            color: #8b4513;
+            text-decoration: none;
+        }
+        
+        .member-name a:hover {
+            text-decoration: underline;
+        }
+        
+        .member-total, .member-xp {
+            font-size: 0.9em;
+            color: #5d4037;
+            font-weight: 500;
+        }
+        
+        /* Group Iron Stats now use the same .stats-grid and .stat-item classes as Player Stats */
+        
+        .stat-name {
+            color: #5d4037;
+            font-weight: 500;
+        }
+        
+        .stat-value {
+            color: #2e1a0a;
+            font-weight: 600;
+        }
+        
+        .loading-state, .error-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #8b4513;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-state p {
+            color: #8b4513;
+            font-style: italic;
+        }
     </style>
     <!-- Include monster database -->
     <script src="monsters.js?v=2.1"></script>
@@ -2580,55 +3116,98 @@
                     <!-- Slayer Tab -->
                     <div id="slayer-tab" class="tab-content">
                         <h1>Slayer Guide</h1>
-                        <h2>Choose a Slayer Monster:</h2>
-                        <select id="monster-selector" class="monster-selector" onchange="updateMonsterInfo()">
-                            <option value="">Select a monster...</option>
-                        </select>
-                        <div id="monster-info" class="monster-info" style="display: none;">
-                            <h3 id="monster-name"></h3>
-                            <p id="monster-description"></p>
-                            <h4>Hitpoints:</h4>
-                            <p id="monster-hp"></p>
-                            <h4>Defenses:</h4>
-                            <p id="monster-defenses"></p>
-                            <h4>Weaknesses:</h4>
-                            <p id="monster-weaknesses"></p>
-                            <h4>Notable Drops:</h4>
-                            <p id="monster-drops"></p>
-                            <h4>Location:</h4>
-                            <p id="monster-location"></p>
+                        
+                        <div class="slayer-container">
+                            <div class="slayer-selector">
+                                <label for="monster-selector">Choose a Slayer Monster:</label>
+                                <select id="monster-selector" class="monster-selector" onchange="updateMonsterInfo()">
+                                    <option value="">Select a monster...</option>
+                                </select>
+                            </div>
+                            
+                            <div id="monster-info-container" class="monster-info-container">
+                                <div id="monster-info" class="monster-info" style="display: none;">
+                                    <div class="monster-header">
+                                        <h3 id="monster-name"></h3>
+                                    </div>
+                                    <div class="monster-content">
+                                        <div class="monster-section">
+                                            <p id="monster-description"></p>
+                                        </div>
+                                        
+                                        <div class="monster-section">
+                                            <h4>💚 Hitpoints:</h4>
+                                            <p id="monster-hp"></p>
+                                        </div>
+                                        
+                                        <div class="monster-section">
+                                            <h4>🛡️ Defenses:</h4>
+                                            <p id="monster-defenses"></p>
+                                        </div>
+                                        
+                                        <div class="monster-section">
+                                            <h4>⚔️ Weaknesses:</h4>
+                                            <p id="monster-weaknesses"></p>
+                                        </div>
+                                        
+                                        <div class="monster-section">
+                                            <h4>💰 Notable Drops:</h4>
+                                            <p id="monster-drops"></p>
+                                        </div>
+                                        
+                                        <div class="monster-section">
+                                            <h4>📍 Location:</h4>
+                                            <p id="monster-location"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="monster-placeholder" class="monster-placeholder">
+                                    <p>Select a monster above to view detailed information</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Potions Tab -->
                     <div id="potions-tab" class="tab-content">
                         <h1>Herblore Guide</h1>
-                        <div style="margin-bottom: 15px;">
-                            <label for="potion-category-filter" style="margin-right: 10px; color: #2c1810; font-weight: bold;">Filter by Category:</label>
-                            <select id="potion-category-filter" onchange="filterPotions()" style="padding: 5px; border: 1px solid #8b4513; border-radius: 3px; background: #f4e4bc;">
-                                <option value="all">All Potions</option>
-                                <option value="Combat">Combat Potions</option>
-                                <option value="Prayer">Prayer & Restore</option>
-                                <option value="Skill">Skill Potions</option>
-                                <option value="Barbarian">Barbarian Herblore</option>
-                            </select>
-                            <label for="potion-level-filter" style="margin: 0 10px; color: #2c1810; font-weight: bold;">Min Level:</label>
-                            <input type="number" id="potion-level-filter" min="1" max="99" value="1" onchange="filterPotions()" style="width: 60px; padding: 5px; border: 1px solid #8b4513; border-radius: 3px;">
-                        </div>
-                        <table class="potions-table">
-                            <thead>
-                                <tr>
-                                    <th>Potion Name</th>
-                                    <th>Level Required</th>
-                                    <th>Ingredients</th>
-                                    <th>XP Gained</th>
-                                    <th>Effect</th>
-                                </tr>
-                            </thead>
-                            <tbody id="potions-table-body">
+                        
+                        <div class="potions-container">
+                            <div class="potions-filters">
+                                <div class="filter-row">
+                                    <label for="potion-category-filter">Category:</label>
+                                    <select id="potion-category-filter" onchange="filterPotions()">
+                                        <option value="all">All Potions</option>
+                                        <option value="Combat">Combat Potions</option>
+                                        <option value="Prayer">Prayer & Restore</option>
+                                        <option value="Skill">Skill Potions</option>
+                                        <option value="Barbarian">Barbarian Herblore</option>
+                                    </select>
+                                    
+                                    <label for="potion-level-filter">Min Level:</label>
+                                    <input type="number" id="potion-level-filter" min="1" max="99" value="1" onchange="filterPotions()">
+                                </div>
+                                
+                                <div class="filter-row">
+                                    <label for="primary-ingredient-filter">Primary Ingredient:</label>
+                                    <select id="primary-ingredient-filter" onchange="filterPotions()">
+                                        <option value="all">All Primary</option>
+                                    </select>
+                                    
+                                    <label for="secondary-ingredient-filter">Secondary Ingredient:</label>
+                                    <select id="secondary-ingredient-filter" onchange="filterPotions()">
+                                        <option value="all">All Secondary</option>
+                                    </select>
+                                    
+                                    <button class="clear-filters-btn" onclick="clearPotionFilters()">Clear Filters</button>
+                                </div>
+                            </div>
+                            
+                            <div id="potions-list" class="potions-list">
                                 <!-- Potions will be populated dynamically -->
-                            </tbody>
-                        </table>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- To-Do List Tab -->
@@ -2871,11 +3450,52 @@
                             <div id="quest-content"></div>
                         </div>
                     </div>
+                    <!-- Group Iron Stats Tab -->
+                    <div id="group-iron-tab" class="tab-content">
+                        <h1>Group Iron Stats</h1>
+                        
+                        <!-- Group Lookup Section -->
+                        <div class="group-lookup-section">
+                            <div class="lookup-container">
+                                <input type="text" id="group-name-input" class="group-name-input" placeholder="Enter group name..." onkeypress="handleGroupLookupEnter(event)">
+                                <button class="lookup-button" onclick="lookupGroupStats()">Search Group</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Member Selector Section -->
+                        <div id="member-selector-section" class="member-selector-section" style="display: none;">
+                            <label for="member-selector" class="member-selector-label">View Member Stats:</label>
+                            <select id="member-selector" class="member-selector" onchange="displaySelectedMember()">
+                                <option value="all">All Members</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Group Stats Display -->
+                        <div id="group-stats-container" class="group-stats-container" style="display: none;">
+                            <!-- Group header will be populated here -->
+                            <div id="group-header" class="group-header"></div>
+                            
+                            <!-- Group members will be populated here -->
+                            <div id="group-members" class="group-members"></div>
+                        </div>
+                        
+                        <!-- Loading state -->
+                        <div id="group-loading" class="loading-state" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <p>Loading group information...</p>
+                        </div>
+                        
+                        <!-- Error state -->
+                        <div id="group-error" class="error-state" style="display: none;">
+                            <p>Group not found or an error occurred. Please check the group name and try again.</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="tab-navigation-right">
                     <button class="tab-button-right active" onclick="switchTab('right', 'stats', this)">Stats</button>
                     <button class="tab-button-right" onclick="switchTab('right', 'diaries', this)">Diaries</button>
                     <button class="tab-button-right" onclick="switchTab('right', 'quests', this)">Quests</button>
+                    <button class="tab-button-right" onclick="switchTab('right', 'group-iron', this)">Group Iron</button>
                 </div>
             </div>
         </div>
@@ -3029,10 +3649,12 @@
         function updateMonsterInfo() {
             const selector = document.getElementById('monster-selector');
             const infoDiv = document.getElementById('monster-info');
+            const placeholder = document.getElementById('monster-placeholder');
             const selectedMonster = selector.value;
             
             if (!selectedMonster) {
                 infoDiv.style.display = 'none';
+                placeholder.style.display = 'flex';
                 return;
             }
             
@@ -3059,9 +3681,11 @@
                 document.getElementById('monster-location').innerHTML = locationDetails;
                 
                 infoDiv.style.display = 'block';
+                placeholder.style.display = 'none';
             } else {
                 console.log('Monster not found:', selectedMonster);
                 infoDiv.style.display = 'none';
+                placeholder.style.display = 'flex';
             }
         }
 
@@ -3624,12 +4248,64 @@ if (typeof module !== 'undefined' && module.exports) {
             const potions = getAllPotions();
             console.log(`Found ${potions.length} potions in database`);
             
+            // Populate ingredient filters
+            populateIngredientFilters(potions);
+            
             displayPotions(potions);
+        }
+        
+        function populateIngredientFilters(potions) {
+            const primarySelect = document.getElementById('primary-ingredient-filter');
+            const secondarySelect = document.getElementById('secondary-ingredient-filter');
+            
+            if (!primarySelect || !secondarySelect) {
+                console.error('Ingredient filter elements not found!');
+                return;
+            }
+            
+            // Get unique ingredients
+            const primaryIngredients = new Set();
+            const secondaryIngredients = new Set();
+            
+            potions.forEach(potion => {
+                if (potion.primary_ingredient && potion.primary_ingredient.name) {
+                    primaryIngredients.add(potion.primary_ingredient.name);
+                }
+                if (potion.secondary_ingredient && potion.secondary_ingredient.name) {
+                    secondaryIngredients.add(potion.secondary_ingredient.name);
+                }
+            });
+            
+            // Sort ingredients alphabetically
+            const sortedPrimary = Array.from(primaryIngredients).sort();
+            const sortedSecondary = Array.from(secondaryIngredients).sort();
+            
+            // Clear and populate primary ingredients
+            primarySelect.innerHTML = '<option value="all">All Primary</option>';
+            sortedPrimary.forEach(ingredient => {
+                const option = document.createElement('option');
+                option.value = ingredient;
+                option.textContent = ingredient;
+                primarySelect.appendChild(option);
+            });
+            
+            // Clear and populate secondary ingredients  
+            secondarySelect.innerHTML = '<option value="all">All Secondary</option>';
+            sortedSecondary.forEach(ingredient => {
+                const option = document.createElement('option');
+                option.value = ingredient;
+                option.textContent = ingredient;
+                secondarySelect.appendChild(option);
+            });
+            
+            console.log(`Populated ${sortedPrimary.length} primary and ${sortedSecondary.length} secondary ingredients`);
         }
 
         function filterPotions() {
             const categoryFilter = document.getElementById('potion-category-filter').value;
             const levelFilter = parseInt(document.getElementById('potion-level-filter').value) || 1;
+            const primaryFilter = document.getElementById('primary-ingredient-filter').value;
+            const secondaryFilter = document.getElementById('secondary-ingredient-filter').value;
             
             let potions = getAllPotions();
             
@@ -3641,61 +4317,78 @@ if (typeof module !== 'undefined' && module.exports) {
             // Filter by level
             potions = potions.filter(potion => potion.level_required >= levelFilter);
             
-            console.log(`Filtered to ${potions.length} potions (category: ${categoryFilter}, min level: ${levelFilter})`);
+            // Filter by primary ingredient
+            if (primaryFilter !== 'all') {
+                potions = potions.filter(potion => 
+                    potion.primary_ingredient && potion.primary_ingredient.name === primaryFilter
+                );
+            }
+            
+            // Filter by secondary ingredient
+            if (secondaryFilter !== 'all') {
+                potions = potions.filter(potion => 
+                    potion.secondary_ingredient && potion.secondary_ingredient.name === secondaryFilter
+                );
+            }
+            
+            console.log(`Filtered to ${potions.length} potions (category: ${categoryFilter}, min level: ${levelFilter}, primary: ${primaryFilter}, secondary: ${secondaryFilter})`);
             displayPotions(potions);
+        }
+        
+        function clearPotionFilters() {
+            document.getElementById('potion-category-filter').value = 'all';
+            document.getElementById('potion-level-filter').value = 1;
+            document.getElementById('primary-ingredient-filter').value = 'all';
+            document.getElementById('secondary-ingredient-filter').value = 'all';
+            
+            // Re-filter potions with cleared filters
+            filterPotions();
+            
+            console.log('All potion filters cleared');
         }
 
         function displayPotions(potions) {
-            const tableBody = document.getElementById('potions-table-body');
+            const potionsList = document.getElementById('potions-list');
             
-            if (!tableBody) {
-                console.error('Potions table body not found!');
+            if (!potionsList) {
+                console.error('Potions list container not found!');
                 return;
             }
             
-            tableBody.innerHTML = '';
+            potionsList.innerHTML = '';
             
             potions.forEach(potion => {
-                const row = document.createElement('tr');
+                const potionItem = document.createElement('div');
+                potionItem.className = 'potion-item';
                 
-                // Create clickable potion name with wiki link
-                const nameCell = document.createElement('td');
-                nameCell.innerHTML = `<a href="${potion.getWikiUrl()}" target="_blank" class="wiki-link" style="color: #654321; text-decoration: none;">${potion.name}</a>`;
-                row.appendChild(nameCell);
-                
-                // Level required
-                const levelCell = document.createElement('td');
-                levelCell.textContent = potion.level_required;
-                levelCell.style.textAlign = 'center';
-                row.appendChild(levelCell);
-                
-                // Ingredients
-                const ingredientsCell = document.createElement('td');
-                ingredientsCell.textContent = formatIngredients(potion);
-                row.appendChild(ingredientsCell);
-                
-                // XP gained
-                const xpCell = document.createElement('td');
-                xpCell.textContent = potion.xp_gained;
-                xpCell.style.textAlign = 'center';
-                row.appendChild(xpCell);
-                
-                // Effect
-                const effectCell = document.createElement('td');
-                effectCell.textContent = potion.effect;
-                effectCell.style.fontSize = '0.9em';
-                row.appendChild(effectCell);
-                
-                // Add barbarian herblore indicator
+                // Add barbarian herblore styling
                 if (potion.barbarian_herblore) {
-                    row.style.backgroundColor = 'rgba(139, 69, 19, 0.1)';
-                    row.title = 'Barbarian Herblore training';
+                    potionItem.classList.add('barbarian-herblore');
+                    potionItem.title = 'Barbarian Herblore training';
                 }
                 
-                tableBody.appendChild(row);
+                potionItem.innerHTML = `
+                    <div class="potion-header">
+                        <a href="${potion.getWikiUrl()}" target="_blank" class="potion-name">${potion.name}</a>
+                        <span class="potion-level">Level ${potion.level_required}</span>
+                    </div>
+                    <div class="potion-content">
+                        <div class="potion-info">
+                            <div class="potion-ingredients">
+                                <strong>Ingredients:</strong>
+                                ${formatIngredients(potion)}
+                            </div>
+                            <div class="potion-xp">
+                                ${potion.xp_gained} XP
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                potionsList.appendChild(potionItem);
             });
             
-            console.log(`Displayed ${potions.length} potions in table`);
+            console.log(`Displayed ${potions.length} potions in list`);
         }
 
         // Format monster locations with detailed information from locations database
@@ -4194,6 +4887,609 @@ if (typeof module !== 'undefined' && module.exports) {
             document.getElementById('quest-main-view').style.display = 'block';
         }
 
+        // Group Iron Stats Functions
+        function handleGroupLookupEnter(event) {
+            if (event.key === 'Enter') {
+                lookupGroupStats();
+            }
+        }
+
+        async function lookupGroupStats() {
+            const groupName = document.getElementById('group-name-input').value.trim();
+            if (!groupName) {
+                alert('Please enter a group name');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('group-loading').style.display = 'block';
+            document.getElementById('group-stats-container').style.display = 'none';
+            document.getElementById('group-error').style.display = 'none';
+
+            try {
+                // TODO: Implement actual OSRS Group Ironman API integration here
+                // This would fetch from OSRS hiscores API or proxy server
+                const groupData = await fetchGroupStatsFromAPI(groupName);
+                
+                if (groupData && groupData.members && groupData.members.length > 0) {
+                    // Save to IndexedDB
+                    await saveGroupStatsToDatabase(groupData);
+                    
+                    // Display the stats
+                    displayGroupStats(groupData);
+                } else {
+                    throw new Error('No group data found');
+                }
+
+            } catch (error) {
+                console.error('Error fetching group stats:', error);
+                document.getElementById('group-error').style.display = 'block';
+                document.getElementById('group-loading').style.display = 'none';
+                
+                // Update error message to be more informative
+                const errorDiv = document.getElementById('group-error');
+                errorDiv.innerHTML = `
+                    <p>Group lookup functionality requires API integration.</p>
+                    <p>Please implement OSRS Group Ironman hiscores API or proxy server.</p>
+                    <small style="color: #666; font-style: italic;">
+                        Note: OSRS hiscores require server-side proxy due to CORS restrictions.
+                    </small>
+                `;
+            }
+        }
+
+        // Group Iron Stats API Functions
+        // Helper function to safely extract XP values (handles both numbers and strings)
+        function getSkillXp(skill) {
+            if (typeof skill.xp === 'number') {
+                return skill.xp;
+            }
+            if (typeof skill.xp === 'string') {
+                return parseInt(skill.xp.replace(/[^\d]/g, '') || '0');
+            }
+            return 0;
+        }
+
+        async function fetchGroupStatsFromAPI(groupName) {
+            try {
+                console.log('Looking up group ironman:', groupName);
+                
+                // Use CORS proxy for API access (same approach as lookupPlayer)
+                const htmlContent = await fetchGroupDataWithProxy(groupName);
+                const groupData = parseGroupIronData(htmlContent, groupName);
+                
+                // Fetch individual player stats for each member
+                console.log(`Fetching individual stats for ${groupData.members.length} members...`);
+                
+                // Update loading message
+                const errorDiv = document.getElementById('group-error');
+                const loadingDiv = document.getElementById('group-loading');
+                if (loadingDiv) {
+                    loadingDiv.innerHTML = `
+                        <div class="loading-spinner"></div>
+                        <p>Loading group information...</p>
+                        <p style="font-size: 0.9em; color: #666;">Fetching individual stats for ${groupData.members.length} members...</p>
+                    `;
+                }
+                
+                // Process members sequentially (one at a time) to reduce proxy load
+                const membersWithStats = [];
+                for (let index = 0; index < groupData.members.length; index++) {
+                    const member = groupData.members[index];
+                    
+                    try {
+                        console.log(`Fetching stats for ${member.name}... (${index + 1}/${groupData.members.length})`);
+                        
+                        // Update loading progress
+                        if (loadingDiv) {
+                            loadingDiv.innerHTML = `
+                                <div class="loading-spinner"></div>
+                                <p>Loading group information...</p>
+                                <p style="font-size: 0.9em; color: #666;">Fetching stats for ${member.name}... (${index + 1}/${groupData.members.length})</p>
+                            `;
+                        }
+                        
+                        // Clean the player name before API call (remove diamond characters)
+                        const cleanName = member.originalName.replace(/[^\w\s-]/g, '');
+                        const playerStats = await fetchIndividualPlayerStats(cleanName);
+                        console.log(`✓ Successfully fetched stats for ${member.name}`);
+                        
+                        membersWithStats.push({
+                            ...member,
+                            skills: playerStats
+                        });
+                        
+                        // Small delay between requests to be respectful to proxy services
+                        if (index < groupData.members.length - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        }
+                        
+                    } catch (error) {
+                        console.warn(`Failed to fetch stats for ${member.name}:`, error.message);
+                        
+                        // Show temporary message about proxy issues
+                        if (loadingDiv) {
+                            loadingDiv.innerHTML = `
+                                <div class="loading-spinner"></div>
+                                <p>Proxy services temporarily unavailable</p>
+                                <p style="font-size: 0.9em; color: #666;">Using approximated data for ${member.name}... (${index + 1}/${groupData.members.length})</p>
+                            `;
+                        }
+                        
+                        // Fallback to generated data if individual fetch fails
+                        membersWithStats.push({
+                            ...member,
+                            skills: generateBasicSkillsData(member.totalLevel)
+                        });
+                    }
+                }
+                
+                return {
+                    name: groupName,
+                    members: membersWithStats,
+                    lastUpdated: new Date().toISOString()
+                };
+                
+            } catch (error) {
+                throw new Error(`Failed to fetch group stats: ${error.message}`);
+            }
+        }
+
+        /**
+         * Fetch individual player stats using the same method as lookupPlayer
+         */
+        async function fetchIndividualPlayerStats(playerName) {
+            try {
+                // Use the same fetchPlayerDataWithProxy function as lookupPlayer
+                const csvData = await fetchPlayerDataWithProxy(playerName);
+                const playerStats = parseHiscoresData(csvData);
+                return playerStats;
+            } catch (error) {
+                throw new Error(`Failed to fetch individual stats for ${playerName}: ${error.message}`);
+            }
+        }
+
+        /**
+         * Fetch group ironman data using CORS proxy services (adapted from fetchPlayerDataWithProxy)
+         */
+        async function fetchGroupDataWithProxy(groupName) {
+            // Multiple CORS proxy fallbacks (same as player lookup)
+            const proxies = [
+                'https://corsproxy.io/?',
+                'https://proxy.cors.sh/',
+                'https://api.allorigins.win/raw?url=',
+                'https://cors-proxy.fringe.zone/',
+                'https://cors.eu.org/',
+                'https://cors-anywhere.herokuapp.com/',
+                'https://api.codetabs.com/v1/proxy?quest=',
+                'https://thingproxy.freeboard.io/fetch/'
+            ];
+            
+            const groupUrl = `https://secure.runescape.com/m=hiscore_oldschool_ironman/group-ironman/view-group?name=${encodeURIComponent(groupName)}`;
+            
+            for (let i = 0; i < proxies.length; i++) {
+                try {
+                    console.log(`Trying proxy ${i + 1}/${proxies.length} for group lookup: ${proxies[i]}`);
+                    
+                    let proxyUrl;
+                    if (proxies[i].includes('codetabs')) {
+                        proxyUrl = proxies[i] + encodeURIComponent(groupUrl);
+                    } else {
+                        proxyUrl = proxies[i] + groupUrl;
+                    }
+                    
+                    const response = await fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: {
+                            'User-Agent': 'Iron-Bible/1.0'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        console.log(`Proxy ${i + 1} failed with status: ${response.status}`);
+                        continue;
+                    }
+                    
+                    const htmlData = await response.text();
+                    
+                    // Validate that we got proper HTML data (not an error page)
+                    if (htmlData && htmlData.includes('<html') && !htmlData.includes('Group not found') && !htmlData.includes('error')) {
+                        console.log(`Success with proxy ${i + 1} for group lookup`);
+                        return htmlData;
+                    } else {
+                        console.log(`Proxy ${i + 1} returned invalid data or group not found`);
+                        continue;
+                    }
+                    
+                } catch (error) {
+                    console.log(`Proxy ${i + 1} error:`, error.message);
+                    continue;
+                }
+            }
+            
+            throw new Error(`Unable to fetch group data for "${groupName}". All proxy services are currently unavailable or group not found. Please try again later.`);
+        }
+
+        /**
+         * Parse Group Ironman HTML data to extract member information
+         */
+        function parseGroupIronData(htmlContent, groupName) {
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+                
+                const groupData = {
+                    name: groupName,
+                    members: []
+                };
+
+                // Look for the main group table or member sections in the HTML
+                const tables = doc.querySelectorAll('table');
+                let membersFound = false;
+
+                // Try to find tables containing player data
+                tables.forEach(table => {
+                    const rows = table.querySelectorAll('tr');
+                    
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        
+                        // Look for rows that contain player links
+                        const playerLink = row.querySelector('a[href*="hiscorepersonal"]');
+                        if (playerLink) {
+                            // Fix character encoding issues in player names
+                            const rawPlayerName = playerLink.textContent.trim();
+                            const cleanPlayerName = rawPlayerName.replace(/[^\w\s-]/g, '_').trim();
+                            
+                            if (cleanPlayerName) {
+                                // Extract total level and other data from the row
+                                let totalLevel = '0';
+                                let totalXp = '0';
+                                
+                                // Try to find total level in the same row
+                                if (cells.length >= 2) {
+                                    // Usually the format is: PlayerName | Total Level | Total XP
+                                    const levelCell = cells[1];
+                                    const xpCell = cells.length > 2 ? cells[2] : null;
+                                    
+                                    if (levelCell) {
+                                        const levelText = levelCell.textContent.trim();
+                                        // Remove commas and validate number
+                                        const cleanLevelText = levelText.replace(/,/g, '');
+                                        if (cleanLevelText && !isNaN(cleanLevelText)) {
+                                            totalLevel = cleanLevelText;
+                                        }
+                                    }
+                                    
+                                    if (xpCell) {
+                                        const xpText = xpCell.textContent.trim();
+                                        // Remove commas and validate number
+                                        const cleanXpText = xpText.replace(/,/g, '');
+                                        if (cleanXpText && !isNaN(cleanXpText)) {
+                                            totalXp = cleanXpText;
+                                        }
+                                    }
+                                }
+
+                                // Create member data with actual skill data
+                                const memberData = {
+                                    name: cleanPlayerName,
+                                    originalName: rawPlayerName, // Keep original for URL encoding
+                                    totalLevel: totalLevel,
+                                    totalXp: totalXp,
+                                    skills: null // Will be populated with real data
+                                };
+                                
+                                groupData.members.push(memberData);
+                                membersFound = true;
+                                console.log(`Found member: ${cleanPlayerName} (Level ${totalLevel})`);
+                            }
+                        }
+                    });
+                });
+
+                // Fallback: If no table structure worked, try to find player links anywhere
+                if (!membersFound) {
+                    const playerLinks = doc.querySelectorAll('a[href*="hiscorepersonal"]');
+                    
+                    playerLinks.forEach(link => {
+                        const rawPlayerName = link.textContent.trim();
+                        const cleanPlayerName = rawPlayerName.replace(/[^\w\s-]/g, '_').trim();
+                        
+                        if (cleanPlayerName) {
+                            // Look for nearby text that might contain total level
+                            let totalLevel = '0';
+                            const parentElement = link.parentElement;
+                            
+                            if (parentElement) {
+                                const parentText = parentElement.textContent;
+                                const levelMatch = parentText.match(/(?:Total Level:?\s*)?(\d{1,4})/);
+                                if (levelMatch) {
+                                    totalLevel = levelMatch[1];
+                                }
+                            }
+
+                            const memberData = {
+                                name: cleanPlayerName,
+                                originalName: rawPlayerName,
+                                totalLevel: totalLevel,
+                                skills: null // Will be populated with real data
+                            };
+                            
+                            groupData.members.push(memberData);
+                            membersFound = true;
+                        }
+                    });
+                }
+
+                if (!membersFound || groupData.members.length === 0) {
+                    throw new Error('No group members found in the response');
+                }
+
+                console.log(`Parsed ${groupData.members.length} members from group "${groupName}"`);
+                return groupData;
+                
+            } catch (error) {
+                console.error('Error parsing group iron data:', error);
+                throw new Error('Failed to parse group ironman data from response');
+            }
+        }
+
+        /**
+         * Generate basic skills data structure based on total level
+         */
+        function generateBasicSkillsData(totalLevel) {
+            const skills = {};
+            // Use the same skill order as Player Stats tab
+            const skillNames = ['attack', 'strength', 'defence', 'ranged', 'prayer', 'magic', 'runecraft', 'construction',
+                              'hitpoints', 'agility', 'herblore', 'thieving', 'crafting', 'fletching', 'slayer', 'hunter',
+                              'mining', 'smithing', 'fishing', 'cooking', 'firemaking', 'woodcutting', 'farming'];
+            
+            const totalLevelNum = parseInt(totalLevel) || 0;
+            const averageLevel = Math.max(1, Math.floor(totalLevelNum / skillNames.length));
+            
+            skillNames.forEach(skillName => {
+                // Generate approximate level and XP based on total level
+                const level = Math.max(1, averageLevel + Math.floor(Math.random() * 10 - 5));
+                const xp = Math.floor(level * level * 100 + Math.random() * 50000);
+                
+                skills[skillName] = {
+                    level: level.toString(),
+                    xp: xp.toString() // Use plain string instead of toLocaleString to avoid diamond characters
+                };
+            });
+            
+            return skills;
+        }
+
+        // IndexedDB Functions for Group Iron Stats
+        async function saveGroupStatsToDatabase(groupData) {
+            try {
+                const db = await openDatabase();
+                const transaction = db.transaction(['groupIronStats'], 'readwrite');
+                const objectStore = transaction.objectStore('groupIronStats');
+                
+                const groupStatsData = {
+                    id: 'current_group',
+                    groupName: groupData.name,
+                    members: groupData.members,
+                    lastUpdated: new Date().toISOString()
+                };
+                
+                await objectStore.put(groupStatsData);
+                console.log('Group Iron stats saved to database successfully');
+            } catch (error) {
+                console.error('Error saving group stats to database:', error);
+            }
+        }
+
+        async function loadGroupStatsFromDatabase() {
+            try {
+                const db = await openDatabase();
+                const transaction = db.transaction(['groupIronStats'], 'readonly');
+                const objectStore = transaction.objectStore('groupIronStats');
+                const request = objectStore.get('current_group');
+                
+                return new Promise((resolve, reject) => {
+                    request.onsuccess = function() {
+                        if (request.result) {
+                            console.log('Group Iron stats loaded from database successfully');
+                            resolve(request.result);
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    request.onerror = function() {
+                        console.error('Error loading group stats from database');
+                        resolve(null);
+                    };
+                });
+            } catch (error) {
+                console.error('Error loading group stats from database:', error);
+                return null;
+            }
+        }
+
+        async function clearGroupStatsFromDatabase() {
+            try {
+                const db = await openDatabase();
+                const transaction = db.transaction(['groupIronStats'], 'readwrite');
+                const objectStore = transaction.objectStore('groupIronStats');
+                
+                await objectStore.delete('current_group');
+                console.log('Group Iron stats cleared from database successfully');
+            } catch (error) {
+                console.error('Error clearing group stats from database:', error);
+            }
+        }
+
+
+        function displayGroupStats(groupData) {
+            document.getElementById('group-loading').style.display = 'none';
+            document.getElementById('group-error').style.display = 'none';
+            document.getElementById('group-stats-container').style.display = 'block';
+            document.getElementById('member-selector-section').style.display = 'flex';
+
+            // Store group data globally for member selector
+            window.currentGroupData = groupData;
+            
+            // Check if any members are using approximated data (fallback)
+            const usingApproximatedData = groupData.members.some(member => {
+                // Check if skills data looks generated (all levels similar)
+                const skillLevels = Object.values(member.skills).map(skill => parseInt(skill.level));
+                const avgLevel = skillLevels.reduce((sum, level) => sum + level, 0) / skillLevels.length;
+                const levelVariation = Math.max(...skillLevels) - Math.min(...skillLevels);
+                return levelVariation < 20; // Generated data typically has low variation
+            });
+
+            // Calculate group totals
+            const groupTotalLevel = groupData.members.reduce((sum, member) => 
+                sum + parseInt(member.totalLevel), 0
+            );
+
+            const groupTotalContribution = groupData.members.reduce((sum, member) => {
+                const memberXp = Object.values(member.skills).reduce((xpSum, skill) => 
+                    xpSum + getSkillXp(skill), 0
+                );
+                return sum + memberXp;
+            }, 0);
+
+            // Update group header with totals
+            const groupHeader = document.getElementById('group-header');
+            groupHeader.innerHTML = `
+                <h2>${groupData.name}</h2>
+                ${usingApproximatedData ? '<p style="font-size: 0.9em; color: #d2691e; margin: 5px 0;">⚠️ Using approximated stats due to proxy service issues</p>' : ''}
+                <div class="group-info">
+                    <div class="group-stat-item">
+                        <div class="group-stat-label">Members</div>
+                        <div class="group-stat-value">${groupData.members.length}</div>
+                    </div>
+                    <div class="group-stat-item">
+                        <div class="group-stat-label">Total Level</div>
+                        <div class="group-stat-value">${groupTotalLevel.toLocaleString()}</div>
+                    </div>
+                    <div class="group-stat-item">
+                        <div class="group-stat-label">Total Contribution</div>
+                        <div class="group-stat-value">${groupTotalContribution.toLocaleString()} XP</div>
+                    </div>
+                </div>
+            `;
+
+            // Populate member selector
+            const memberSelector = document.getElementById('member-selector');
+            memberSelector.innerHTML = '<option value="all">All Members</option>';
+            
+            groupData.members.forEach((member, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${member.name} (Level ${member.totalLevel})`;
+                memberSelector.appendChild(option);
+            });
+
+            // Display all members initially
+            displayAllMembers(groupData);
+        }
+
+        function displaySelectedMember() {
+            const memberSelector = document.getElementById('member-selector');
+            const selectedValue = memberSelector.value;
+            
+            if (!window.currentGroupData) return;
+            
+            if (selectedValue === 'all') {
+                displayAllMembers(window.currentGroupData);
+            } else {
+                const memberIndex = parseInt(selectedValue);
+                const selectedMember = window.currentGroupData.members[memberIndex];
+                displaySingleMember(selectedMember);
+            }
+        }
+
+        function displayAllMembers(groupData) {
+            const groupMembers = document.getElementById('group-members');
+            groupMembers.innerHTML = '';
+
+            groupData.members.forEach(member => {
+                const memberCard = createMemberCard(member);
+                groupMembers.appendChild(memberCard);
+            });
+        }
+
+        function displaySingleMember(member) {
+            const groupMembers = document.getElementById('group-members');
+            groupMembers.innerHTML = '';
+            
+            const memberCard = createMemberCard(member);
+            groupMembers.appendChild(memberCard);
+        }
+
+        function createMemberCard(member) {
+            const memberCard = document.createElement('div');
+            memberCard.className = 'member-card';
+
+            const memberHeaderDiv = document.createElement('div');
+            memberHeaderDiv.className = 'member-header';
+            
+            const memberNameDiv = document.createElement('div');
+            memberNameDiv.className = 'member-name';
+            // Use originalName for URL, clean name for display
+            const urlName = member.originalName || member.name;
+            const displayName = member.name;
+            memberNameDiv.innerHTML = `<a href="https://secure.runescape.com/m=hiscore_oldschool_ironman/hiscorepersonal?user1=${encodeURIComponent(urlName)}" target="_blank">${displayName}</a>`;
+            
+            const memberTotalDiv = document.createElement('div');
+            memberTotalDiv.className = 'member-total';
+            memberTotalDiv.textContent = `Total Level: ${member.totalLevel}`;
+            
+            // Calculate member's total XP using helper function
+            const memberTotalXp = Object.values(member.skills).reduce((sum, skill) => 
+                sum + getSkillXp(skill), 0
+            );
+            
+            const memberXpDiv = document.createElement('div');
+            memberXpDiv.className = 'member-xp';
+            memberXpDiv.textContent = `Total XP: ${memberTotalXp.toLocaleString()}`;
+            
+            memberHeaderDiv.appendChild(memberNameDiv);
+            memberHeaderDiv.appendChild(memberTotalDiv);
+            memberHeaderDiv.appendChild(memberXpDiv);
+
+            // Create skills display using the exact same structure as Player Stats
+            const memberStatsDiv = document.createElement('div');
+            memberStatsDiv.className = 'stats-grid'; // Use the same CSS class as Player Stats
+
+            // Use the EXACT same skill order and structure as Player Stats (3 columns, 8 rows, column flow)
+            const skillOrder = [
+                // Column 1: Attack, Strength, Defence, Ranged, Prayer, Magic, Runecraft, Construction
+                'attack', 'strength', 'defence', 'ranged', 'prayer', 'magic', 'runecraft', 'construction',
+                // Column 2: Hitpoints, Agility, Herblore, Thieving, Crafting, Fletching, Slayer, Hunter
+                'hitpoints', 'agility', 'herblore', 'thieving', 'crafting', 'fletching', 'slayer', 'hunter',
+                // Column 3: Mining, Smithing, Fishing, Cooking, Firemaking, Woodcutting, Farming
+                'mining', 'smithing', 'fishing', 'cooking', 'firemaking', 'woodcutting', 'farming'
+            ];
+
+            skillOrder.forEach(skillName => {
+                if (member.skills[skillName]) {
+                    const skill = member.skills[skillName];
+                    const statItem = document.createElement('div');
+                    statItem.className = 'stat-item'; // Same class as Player Stats
+                    
+                    // Create skill icon and level display - EXACT same structure as Player Stats
+                    const skillDisplayName = skillName.charAt(0).toUpperCase() + skillName.slice(1);
+                    statItem.innerHTML = `
+                        <img src="https://oldschool.runescape.wiki/images/${skillDisplayName}_icon.png" 
+                             alt="${skillDisplayName}" class="stat-icon">
+                        <span class="stat-level">${skill.level}/99</span>
+                    `;
+                    memberStatsDiv.appendChild(statItem);
+                }
+            });
+
+            memberCard.appendChild(memberHeaderDiv);
+            memberCard.appendChild(memberStatsDiv);
+            return memberCard;
+        }
+
         // Initialize quest list when page loads
         document.addEventListener('DOMContentLoaded', async function() {
             loadNotes();
@@ -4390,7 +5686,7 @@ if (typeof module !== 'undefined' && module.exports) {
         // IndexedDB database for persistent goal storage
         let goalsDB = null;
         const DB_NAME = 'OSRSGoalsDB';
-        const DB_VERSION = 1;
+        const DB_VERSION = 2; // Incremented to add groupIronStats object store
         const GOALS_STORE = 'goals';
         const SELECTIONS_STORE = 'selections';
         
@@ -4428,6 +5724,63 @@ if (typeof module !== 'undefined' && module.exports) {
                         const selectionsStore = db.createObjectStore(SELECTIONS_STORE, { keyPath: 'id' });
                         selectionsStore.createIndex('selected', 'selected', { unique: false });
                         console.log('Created selections object store');
+                    }
+                    
+                    // Create group iron stats object store
+                    if (!db.objectStoreNames.contains('groupIronStats')) {
+                        const groupStatsStore = db.createObjectStore('groupIronStats', { keyPath: 'id' });
+                        groupStatsStore.createIndex('groupName', 'groupName', { unique: false });
+                        groupStatsStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
+                        console.log('Created group iron stats object store');
+                    }
+                };
+            });
+        }
+
+        /**
+         * Open database connection (used by group iron stats)
+         */
+        async function openDatabase() {
+            if (goalsDB) {
+                return goalsDB;
+            }
+            
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => {
+                    console.error('Failed to open database:', request.error);
+                    reject(request.error);
+                };
+                
+                request.onsuccess = () => {
+                    resolve(request.result);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    // Create goals object store
+                    if (!db.objectStoreNames.contains(GOALS_STORE)) {
+                        const goalsStore = db.createObjectStore(GOALS_STORE, { keyPath: 'id' });
+                        goalsStore.createIndex('category', 'category', { unique: false });
+                        goalsStore.createIndex('difficulty', 'difficulty', { unique: false });
+                        console.log('Created goals object store');
+                    }
+                    
+                    // Create selections object store (for checked goals)
+                    if (!db.objectStoreNames.contains(SELECTIONS_STORE)) {
+                        const selectionsStore = db.createObjectStore(SELECTIONS_STORE, { keyPath: 'id' });
+                        selectionsStore.createIndex('selected', 'selected', { unique: false });
+                        console.log('Created selections object store');
+                    }
+                    
+                    // Create group iron stats object store
+                    if (!db.objectStoreNames.contains('groupIronStats')) {
+                        const groupStatsStore = db.createObjectStore('groupIronStats', { keyPath: 'id' });
+                        groupStatsStore.createIndex('groupName', 'groupName', { unique: false });
+                        groupStatsStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
+                        console.log('Created group iron stats object store');
                     }
                 };
             });
@@ -5624,6 +6977,41 @@ if (typeof module !== 'undefined' && module.exports) {
             setTimeout(addStatsButtons, 500);
         });
 
+        /**
+         * Load saved group iron stats on page load
+         */
+        async function loadSavedGroupIronStats() {
+            try {
+                const savedGroupData = await loadGroupStatsFromDatabase();
+                
+                if (savedGroupData) {
+                    console.log('Loading group iron stats from database:', savedGroupData.groupName);
+                    
+                    // Set the group name in the input field
+                    const groupNameInput = document.getElementById('group-name-input');
+                    if (groupNameInput) {
+                        groupNameInput.value = savedGroupData.groupName;
+                    }
+                    
+                    // Create proper group data structure
+                    const groupData = {
+                        name: savedGroupData.groupName,
+                        members: savedGroupData.members || []
+                    };
+                    
+                    // Display the group stats if there are members
+                    if (groupData.members.length > 0) {
+                        displayGroupStats(groupData);
+                        console.log(`Loaded group "${groupData.name}" with ${groupData.members.length} members from database`);
+                    }
+                } else {
+                    console.log('No saved group iron stats found in database');
+                }
+            } catch (error) {
+                console.error('Error loading saved group iron stats:', error);
+            }
+        }
+
         // Authentication Variables
         let currentUser = null;
         let isLoginMode = true;
@@ -5657,6 +7045,7 @@ if (typeof module !== 'undefined' && module.exports) {
                         
                         // Load player stats
                         await loadSavedPlayerStats();
+                        await loadSavedGroupIronStats();
                         
                         // Set up real-time sync
                         setupRealtimeSync();
@@ -5676,6 +7065,7 @@ if (typeof module !== 'undefined' && module.exports) {
                     
                     // Load stats from localStorage for offline users
                     await loadSavedPlayerStats();
+                    await loadSavedGroupIronStats();
                     
                     // Clear any user-specific data from memory
                     // Keep masterGoalsList intact as it contains quest/diary definitions

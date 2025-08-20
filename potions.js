@@ -315,6 +315,187 @@ const POTIONS_DATABASE = {
         wiki_url: 'https://oldschool.runescape.wiki/w/Super_energy'
     }),
 
+    // Basic Potions
+    'relicyms-balm': new PotionProperties({
+        id: 'relicyms-balm',
+        name: 'Relicym\'s balm',
+        level_required: 8,
+        xp_gained: 40,
+        primary_ingredient: new PotionIngredient('Rogue\'s purse', 1),
+        secondary_ingredient: new PotionIngredient('Snake weed', 1),
+        category: 'Skill',
+        effect: 'Cures disease',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Relicym%27s_balm'
+    }),
+
+    'serum-207': new PotionProperties({
+        id: 'serum-207',
+        name: 'Serum 207',
+        level_required: 15,
+        xp_gained: 50,
+        primary_ingredient: new PotionIngredient('Tarromin', 1),
+        secondary_ingredient: new PotionIngredient('Ashes', 1),
+        category: 'Skill',
+        effect: 'Temporary immunity to disease in Canifis',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Serum_207'
+    }),
+
+    'defence-potion': new PotionProperties({
+        id: 'defence-potion',
+        name: 'Defence potion',
+        level_required: 30,
+        xp_gained: 75,
+        primary_ingredient: new PotionIngredient('Ranarr weed', 1),
+        secondary_ingredient: new PotionIngredient('White berries', 1),
+        category: 'Combat',
+        effect: 'Boosts Defence level by 3 + 10% of level',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Defence_potion'
+    }),
+
+    'agility-potion': new PotionProperties({
+        id: 'agility-potion',
+        name: 'Agility potion',
+        level_required: 34,
+        xp_gained: 80,
+        primary_ingredient: new PotionIngredient('Toadflax', 1),
+        secondary_ingredient: new PotionIngredient('Toad\'s legs', 1),
+        category: 'Skill',
+        effect: 'Boosts Agility level by 3',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Agility_potion'
+    }),
+
+    'fishing-potion': new PotionProperties({
+        id: 'fishing-potion',
+        name: 'Fishing potion',
+        level_required: 50,
+        xp_gained: 112.5,
+        primary_ingredient: new PotionIngredient('Avantoe', 1),
+        secondary_ingredient: new PotionIngredient('Snape grass', 1),
+        category: 'Skill',
+        effect: 'Boosts Fishing level by 3',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Fishing_potion'
+    }),
+
+    'hunter-potion': new PotionProperties({
+        id: 'hunter-potion',
+        name: 'Hunter potion',
+        level_required: 53,
+        xp_gained: 120,
+        primary_ingredient: new PotionIngredient('Avantoe', 1),
+        secondary_ingredient: new PotionIngredient('Kebbit teeth dust', 1),
+        category: 'Skill',
+        effect: 'Boosts Hunter level by 3',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Hunter_potion'
+    }),
+
+    'antipoison-plus': new PotionProperties({
+        id: 'antipoison-plus',
+        name: 'Antipoison+',
+        level_required: 68,
+        xp_gained: 155,
+        primary_ingredient: new PotionIngredient('Irit leaf', 1),
+        secondary_ingredient: new PotionIngredient('Magic roots', 1),
+        category: 'Combat',
+        effect: 'Cures poison and provides immunity for 5 minutes 24 seconds',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Antipoison%2B'
+    }),
+
+    'antipoison-plus-plus': new PotionProperties({
+        id: 'antipoison-plus-plus',
+        name: 'Antipoison++',
+        level_required: 79,
+        xp_gained: 177.5,
+        primary_ingredient: new PotionIngredient('Irit leaf', 1),
+        secondary_ingredient: new PotionIngredient('Coconut', 1),
+        category: 'Combat',
+        effect: 'Cures poison and provides immunity for 12 minutes',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Antipoison%2B%2B'
+    }),
+
+    'extended-antifire': new PotionProperties({
+        id: 'extended-antifire',
+        name: 'Extended antifire',
+        level_required: 84,
+        xp_gained: 110,
+        primary_ingredient: new PotionIngredient('Antifire potion(4)', 1),
+        secondary_ingredient: new PotionIngredient('Lava scale shard', 4),
+        category: 'Skill',
+        effect: 'Provides protection against dragonfire for 12 minutes',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Extended_antifire'
+    }),
+
+    'super-antifire': new PotionProperties({
+        id: 'super-antifire',
+        name: 'Super antifire',
+        level_required: 85,
+        xp_gained: 130,
+        primary_ingredient: new PotionIngredient('Antifire potion(4)', 1),
+        secondary_ingredient: new PotionIngredient('Crushed superior dragon bones', 1),
+        category: 'Skill',
+        effect: 'Complete protection against dragonfire for 3 minutes',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Super_antifire'
+    }),
+
+    'extended-super-antifire': new PotionProperties({
+        id: 'extended-super-antifire',
+        name: 'Extended super antifire',
+        level_required: 98,
+        xp_gained: 160,
+        primary_ingredient: new PotionIngredient('Super antifire potion(4)', 1),
+        secondary_ingredient: new PotionIngredient('Lava scale shard', 4),
+        category: 'Skill',
+        effect: 'Complete protection against dragonfire for 6 minutes',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Extended_super_antifire'
+    }),
+
+    'compost-potion': new PotionProperties({
+        id: 'compost-potion',
+        name: 'Compost potion',
+        level_required: 21,
+        xp_gained: 60,
+        primary_ingredient: new PotionIngredient('Harralander', 1),
+        secondary_ingredient: new PotionIngredient('Compost', 1),
+        category: 'Skill',
+        effect: 'Converts compost to supercompost',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Compost_potion'
+    }),
+
+    'weapon-poison': new PotionProperties({
+        id: 'weapon-poison',
+        name: 'Weapon poison',
+        level_required: 60,
+        xp_gained: 137.5,
+        primary_ingredient: new PotionIngredient('Kwuarm', 1),
+        secondary_ingredient: new PotionIngredient('Dragon scale dust', 1),
+        category: 'Combat',
+        effect: 'Poisons weapon to deal extra damage',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Weapon_poison'
+    }),
+
+    'weapon-poison-plus': new PotionProperties({
+        id: 'weapon-poison-plus',
+        name: 'Weapon poison+',
+        level_required: 73,
+        xp_gained: 165,
+        primary_ingredient: new PotionIngredient('Kwuarm', 1),
+        secondary_ingredient: new PotionIngredient('Poison ivy berries', 1),
+        category: 'Combat',
+        effect: 'Enhanced weapon poison effect',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Weapon_poison%2B'
+    }),
+
+    'weapon-poison-plus-plus': new PotionProperties({
+        id: 'weapon-poison-plus-plus',
+        name: 'Weapon poison++',
+        level_required: 82,
+        xp_gained: 190,
+        primary_ingredient: new PotionIngredient('Dwarf weed', 1),
+        secondary_ingredient: new PotionIngredient('Coconut', 1),
+        category: 'Combat',
+        effect: 'Strongest weapon poison effect',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Weapon_poison%2B%2B'
+    }),
+
     // Special Potions
     'zamorak-brew': new PotionProperties({
         id: 'zamorak-brew',
@@ -350,6 +531,99 @@ const POTIONS_DATABASE = {
         category: 'Combat',
         effect: 'Boosts Magic and Defence by 4 + 15% of level',
         wiki_url: 'https://oldschool.runescape.wiki/w/Battlemage_potion'
+    }),
+
+    // Special & Unique Potions
+    'guthix-rest': new PotionProperties({
+        id: 'guthix-rest',
+        name: 'Guthix rest',
+        level_required: 18,
+        xp_gained: 62.5,
+        primary_ingredient: new PotionIngredient('Harralander', 1),
+        secondary_ingredient: new PotionIngredient('Cup of hot water', 1),
+        additional_ingredients: [
+            new PotionIngredient('Marrentill', 1),
+            new PotionIngredient('Red spiders\' eggs', 1)
+        ],
+        category: 'Skill',
+        effect: 'Heals 5 HP per dose and restores run energy',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Guthix_rest'
+    }),
+
+    'imp-repellent': new PotionProperties({
+        id: 'imp-repellent',
+        name: 'Imp repellent',
+        level_required: 19,
+        xp_gained: 62.5,
+        primary_ingredient: new PotionIngredient('Harralander', 1),
+        secondary_ingredient: new PotionIngredient('Flowers', 1),
+        additional_ingredients: [new PotionIngredient('Anchovies', 1)],
+        category: 'Skill',
+        effect: 'Repels imps from beehives',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Imp_repellent'
+    }),
+
+    'magic-essence': new PotionProperties({
+        id: 'magic-essence',
+        name: 'Magic essence',
+        level_required: 57,
+        xp_gained: 130,
+        primary_ingredient: new PotionIngredient('Gorak claw powder', 1),
+        secondary_ingredient: new PotionIngredient('Super energy(2)', 1),
+        category: 'Skill',
+        effect: 'Used for Fairy Tale Part II quest',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Magic_essence'
+    }),
+
+    'super-ranging': new PotionProperties({
+        id: 'super-ranging',
+        name: 'Super ranging',
+        level_required: 72,
+        xp_gained: 162.5,
+        primary_ingredient: new PotionIngredient('Dwarf weed', 1),
+        secondary_ingredient: new PotionIngredient('Wine of zamorak', 1),
+        category: 'Combat',
+        effect: 'Boosts Ranged level by 5 + 15% of level',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Super_ranging_potion'
+    }),
+
+    'super-magic-potion': new PotionProperties({
+        id: 'super-magic-potion',
+        name: 'Super magic potion',
+        level_required: 76,
+        xp_gained: 172.5,
+        primary_ingredient: new PotionIngredient('Lantadyme', 1),
+        secondary_ingredient: new PotionIngredient('Potato cactus', 1),
+        category: 'Combat',
+        effect: 'Boosts Magic level by 5 + 15% of level',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Super_magic_potion'
+    }),
+
+    // Menaphite Remedies (Desert Treasure II)
+    'menaphite-remedy': new PotionProperties({
+        id: 'menaphite-remedy',
+        name: 'Menaphite remedy',
+        level_required: 88,
+        xp_gained: 200,
+        primary_ingredient: new PotionIngredient('Dwarf weed', 1),
+        secondary_ingredient: new PotionIngredient('Lily of the sands', 1),
+        category: 'Combat',
+        effect: 'Protects from desert heat and restores stats',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Menaphite_remedy'
+    }),
+
+
+    // Forgotten Brews (Zeah)
+    'forgotten-brew': new PotionProperties({
+        id: 'forgotten-brew',
+        name: 'Forgotten brew',
+        level_required: 91,
+        xp_gained: 210,
+        primary_ingredient: new PotionIngredient('Ancient essence', 1),
+        secondary_ingredient: new PotionIngredient('Dwarf weed', 1),
+        category: 'Combat',
+        effect: 'Powerful stat boosting brew',
+        wiki_url: 'https://oldschool.runescape.wiki/w/Forgotten_brew'
     })
 };
 
