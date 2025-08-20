@@ -4982,6 +4982,15 @@ if (typeof module !== 'undefined' && module.exports) {
                     try {
                         console.log(`Fetching stats for ${member.name}... (${index + 1}/${groupData.members.length})`);
                         
+                        // Clean the player name before API call (remove diamond characters and handle spaces)
+                        const cleanName = member.originalName
+                            .replace(/[^\w\s-]/g, '')  // Remove special characters but keep spaces
+                            .replace(/\s+/g, '_')      // Convert spaces to underscores
+                            .replace(/_{2,}/g, '_')    // Remove multiple consecutive underscores
+                            .replace(/^_+|_+$/g, '');  // Remove leading/trailing underscores
+                        
+                        console.log(`Original name: "${member.originalName}" -> Clean name: "${cleanName}"`);
+                        
                         // Update loading progress
                         if (loadingDiv) {
                             loadingDiv.innerHTML = `
@@ -4990,9 +4999,6 @@ if (typeof module !== 'undefined' && module.exports) {
                                 <p style="font-size: 0.9em; color: #666;">Fetching stats for ${member.name}... (${index + 1}/${groupData.members.length})</p>
                             `;
                         }
-                        
-                        // Clean the player name before API call (remove diamond characters)
-                        const cleanName = member.originalName.replace(/[^\w\s-]/g, '');
                         const playerStats = await fetchIndividualPlayerStats(cleanName);
                         console.log(`✓ Successfully fetched stats for ${member.name}`);
                         
