@@ -4982,12 +4982,12 @@ if (typeof module !== 'undefined' && module.exports) {
                     try {
                         console.log(`Fetching stats for ${member.name}... (${index + 1}/${groupData.members.length})`);
                         
-                        // Clean the player name before API call (remove diamond characters and handle spaces)
+                        // Clean the player name before API call (convert diamond characters and spaces to underscores)
                         const cleanName = member.originalName
-                            .replace(/[^\w\s-]/g, '')  // Remove special characters but keep spaces
-                            .replace(/\s+/g, '_')      // Convert spaces to underscores
-                            .replace(/_{2,}/g, '_')    // Remove multiple consecutive underscores
-                            .replace(/^_+|_+$/g, '');  // Remove leading/trailing underscores
+                            .replace(/[^\w\s-]/g, '_')  // Convert special characters (including diamonds) to underscores
+                            .replace(/\s+/g, '_')       // Convert spaces to underscores
+                            .replace(/_{2,}/g, '_')     // Remove multiple consecutive underscores
+                            .replace(/^_+|_+$/g, '');   // Remove leading/trailing underscores
                         
                         console.log(`Original name: "${member.originalName}" -> Clean name: "${cleanName}"`);
                         
