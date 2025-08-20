@@ -4997,38 +4997,65 @@ if (typeof module !== 'undefined' && module.exports) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlContent, 'text/html');
             
-            const members = [];
+            const membersData = {};
             
-            console.log('🔍 Analyzing group page HTML structure...');
+            console.log('🔍 Parsing group page with known structure...');
             
-            // Debug: Log the HTML structure to understand what we're working with
-            const textContent = doc.body.textContent || doc.body.innerText || '';
-            console.log('📄 Page text content preview:', textContent.substring(0, 500));
+            // Find all skill rows with member IDs
+            const skillRows = doc.querySelectorAll('tr[data-js-skill-row-memberid]');
+            console.log(`📊 Found ${skillRows.length} skill rows`);
             
-            // Look for common group ironman page patterns
-            // Try multiple approaches to find member data
-            
-            // Approach 1: Look for table structures
-            const tables = doc.querySelectorAll('table');
-            console.log(`🔍 Found ${tables.length} tables in page`);
-            
-            // Approach 2: Look for specific class patterns
-            const possibleSelectors = [
-                'tr', 'tbody tr', '.group-member', '.player-row', 
-                '.hiscore-row', '.personal-hiscores tr', '[data-player]'
-            ];
-            
-            for (const selector of possibleSelectors) {
-                const elements = doc.querySelectorAll(selector);
-                if (elements.length > 0) {
-                    console.log(`🔍 Found ${elements.length} elements with selector: ${selector}`);
+            skillRows.forEach(row => {
+                const memberID = row.getAttribute('data-js-skill-row-memberid');
+                const cells = row.querySelectorAll('td');
+                
+                if (cells.length >= 3) {
+                    // Extract skill data: Column 1 = Skill Name, Column 2 = Level, Column 3 = XP
+                    const skillElement = cells[0].querySelector('.ua-skill-icon');
+                    const skillName = skillElement ? skillElement.textContent.trim().toLowerCase() : null;
+                    const level = parseInt(cells[1].textContent.trim());
+                    const xp = parseInt(cells[2].textContent.trim().replace(/,/g, ''));
+                    
+                    // Initialize member if not exists
+                    if (!membersData[memberID]) {
+                        membersData[memberID] = {
+                            name: memberID,
+                            originalName: memberID,
+                            skills: {},
+                            fromGroupPage: true
+                        };
+                    }
+                    
+                    // Add skill data
+                    if (skillName && !isNaN(level) && !isNaN(xp)) {
+                        membersData[memberID].skills[skillName] = {
+                            level: level,
+                            xp: xp,
+                            rank: -1 // Not available from group page
+                        };
+                    }
                 }
-            }
+            });
             
-            // For now, return empty to see what the actual page structure looks like
-            // This will force fallback to the old method while we debug
-            console.log('⚠️ Direct parsing needs improvement - forcing fallback to individual API calls');
-            return { members: [] };
+            // Calculate total levels for each member
+            const members = Object.values(membersData).map(member => {
+                const skillLevels = Object.values(member.skills).map(skill => skill.level);
+                const totalLevel = skillLevels.reduce((sum, level) => sum + level, 0);
+                const totalXp = Object.values(member.skills).reduce((sum, skill) => sum + skill.xp, 0);
+                
+                return {
+                    ...member,
+                    totalLevel: totalLevel,
+                    totalXp: totalXp
+                };
+            });
+            
+            console.log(`✅ Successfully parsed ${members.length} members with individual skills from group page`);
+            members.forEach(member => {
+                console.log(`👤 ${member.name}: Level ${member.totalLevel}, ${Object.keys(member.skills).length} skills`);
+            });
+            
+            return { members };
         }
 
         // Group Iron Stats API Functions - Original Individual API Call Approach
@@ -5551,8 +5578,8 @@ if (typeof module !== 'undefined' && module.exports) {
             memberHeaderDiv.appendChild(memberNameDiv);
             memberHeaderDiv.appendChild(memberTotalDiv);
             
-            // Check if member is not on hiscores OR if we only have group page data (no individual skills)
-            if (member.notOnHiscores || member.fromGroupPage) {
+            // Check if member is not on hiscores OR if we have group page data WITHOUT skills
+            if (member.notOnHiscores || (member.fromGroupPage && !member.skills)) {
                 // Use the new group-player-not-found styling
                 memberCard.className = 'group-player-not-found';
                 
