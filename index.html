@@ -3057,6 +3057,18 @@
             font-weight: 500;
         }
         
+        .member-not-found {
+            background: rgba(210, 105, 30, 0.1);
+            border: 1px solid #d2691e;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: #d2691e;
+            font-size: 1em;
+            font-weight: 500;
+            margin-top: 15px;
+        }
+        
         /* Group Iron Stats now use the same .stats-grid and .stat-item classes as Player Stats */
         
         .stat-name {
@@ -5512,13 +5524,15 @@ if (typeof module !== 'undefined' && module.exports) {
             
             // Check if member is not on hiscores
             if (member.notOnHiscores) {
-                const notOnHiscoresDiv = document.createElement('div');
-                notOnHiscoresDiv.className = 'member-xp';
-                notOnHiscoresDiv.style.color = '#d2691e';
-                notOnHiscoresDiv.textContent = 'Not high enough level to be viewed on the leaderboard';
-                memberHeaderDiv.appendChild(notOnHiscoresDiv);
-                
+                // Create a clean card with just name and message
                 memberCard.appendChild(memberHeaderDiv);
+                
+                // Add the not found message in a dedicated section
+                const notFoundDiv = document.createElement('div');
+                notFoundDiv.className = 'member-not-found';
+                notFoundDiv.textContent = 'Not high enough level to be viewed on the leaderboard';
+                memberCard.appendChild(notFoundDiv);
+                
                 return memberCard; // Return early, don't show stats
             }
             
