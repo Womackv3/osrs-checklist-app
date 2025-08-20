@@ -1420,6 +1420,162 @@
             padding-bottom: 8px;
         }
         
+        /* Requirements Tab Styling */
+        .requirements-tab-navigation {
+            display: flex;
+            border-bottom: 2px solid #8b4513;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #d2b48c, #c19a6b);
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .requirements-tab-button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            color: #5d4037;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px 8px 0 0;
+            position: relative;
+        }
+        
+        .requirements-tab-button:hover {
+            background: rgba(139, 69, 19, 0.1);
+            color: #3e2723;
+        }
+        
+        .requirements-tab-button.active {
+            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
+            color: #2e1a0a;
+            border-bottom: 3px solid #8b4513;
+        }
+        
+        .requirements-tab-panel {
+            display: none;
+            animation: requirementsFadeIn 0.3s ease-in;
+            height: calc(100% - 60px);
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        .requirements-tab-panel.active {
+            display: block;
+        }
+        
+        @keyframes requirementsFadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Task Steps Styling */
+        #task-steps-list {
+            height: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        .task-steps-container {
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 8px;
+            margin-right: 2px;
+            box-sizing: border-box;
+        }
+        
+        .task-step-item {
+            background: linear-gradient(135deg, #f4e4bc, #e8d5a3);
+            border: 2px solid #d2b48c;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(139, 69, 19, 0.1);
+        }
+        
+        .task-step-header {
+            background: linear-gradient(135deg, #d2b48c, #c19a6b);
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #b8860b;
+        }
+        
+        .task-step-header h3 {
+            margin: 0;
+            color: #2e1a0a;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .task-step-region {
+            color: #5d4037;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .task-step-content {
+            padding: 15px;
+        }
+        
+        .task-description {
+            background: rgba(139, 69, 19, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            color: #2e1a0a;
+            font-weight: 500;
+        }
+        
+        .task-guide, .task-prerequisites, .task-rewards {
+            margin-bottom: 15px;
+        }
+        
+        .task-guide h4, .task-prerequisites h4, .task-rewards h4 {
+            color: #5d4037;
+            margin-bottom: 8px;
+            font-size: 14px;
+            border-bottom: 1px solid #d2b48c;
+            padding-bottom: 4px;
+        }
+        
+        .task-guide ol, .task-prerequisites ul, .task-rewards ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .task-guide li, .task-prerequisites li, .task-rewards li {
+            margin-bottom: 6px;
+            color: #4a4a4a;
+            line-height: 1.4;
+        }
+        
+        .task-guide em {
+            color: #8b4513;
+            font-weight: 600;
+        }
+        
+        .task-guide p {
+            margin-top: 10px;
+            color: #5d4037;
+            font-style: italic;
+        }
+        
+        .combined-tasks-list {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+        }
+        
+        .combined-tasks-list li {
+            margin-bottom: 8px;
+            color: #2e1a0a;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+        
         .requirements-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -2490,13 +2646,25 @@
                         
                         <!-- Requirements Container - Bottom Half -->
                         <div id="requirements-container">
-                            <h2>Skill Requirements</h2>
+                            <div class="requirements-tab-navigation">
+                                <button class="requirements-tab-button active" onclick="switchRequirementsTab('skills')">📊 Skill Requirements</button>
+                                <button class="requirements-tab-button" onclick="switchRequirementsTab('tasks')">📋 Task Steps</button>
+                            </div>
                             
-                            <!-- Skill Requirements Grid -->
-                            <div id="skill-requirements">
-                                <div class="requirements-grid">
-                                    <!-- Skills will be populated dynamically to match stats tab layout -->
-                                    <p style="text-align: center; color: #666; margin-top: 50px;">Select goals above to see skill requirements</p>
+                            <!-- Skill Requirements Tab -->
+                            <div id="skills-requirements-tab" class="requirements-tab-panel active">
+                                <div id="skill-requirements">
+                                    <div class="requirements-grid">
+                                        <!-- Skills will be populated dynamically to match stats tab layout -->
+                                        <p style="text-align: center; color: #666; margin-top: 50px;">Select goals above to see skill requirements</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Task Steps Tab -->
+                            <div id="tasks-requirements-tab" class="requirements-tab-panel">
+                                <div id="task-steps-list">
+                                    <p style="text-align: center; color: #666; margin-top: 50px;">Diary tasks will appear here with detailed steps</p>
                                 </div>
                             </div>
                         </div>
@@ -2741,6 +2909,11 @@
             
             // Add active class to the clicked button
             buttonElement.classList.add('active');
+            
+            // Update task steps when switching to todo tab
+            if (tabName === 'todo') {
+                updateTaskSteps();
+            }
         }
 
         // Notes functionality with localStorage
@@ -5124,6 +5297,9 @@ if (typeof module !== 'undefined' && module.exports) {
                 // Update requirements display
                 await updateRequirements();
                 
+                // Update task steps if this was a diary task
+                await updateTaskSteps();
+                
                 // Update button states
                 resetButtonState(goalId);
                 
@@ -5265,6 +5441,13 @@ if (typeof module !== 'undefined' && module.exports) {
                     
                     // Update requirements after adding goal
                     await updateRequirements();
+                    
+                    // If this is a diary task, also add it to the Task Steps tab
+                    if (type === 'diary') {
+                        await updateTaskSteps();
+                        // Auto-switch to Task Steps tab to show the newly added diary task
+                        switchRequirementsTab('tasks');
+                    }
                     
                     // Update button state
                     updateButtonState(type, itemId, difficulty, taskIndex, true, newGoal.id);
@@ -5825,6 +6008,113 @@ if (typeof module !== 'undefined' && module.exports) {
         window.manualUpdateRequirements = manualUpdateRequirements;
         window.forceRefreshQuests = forceRefreshQuests;
         window.extractRequiredSkills = extractRequiredSkills;
+        
+        // Requirements Tab Functionality
+        function switchRequirementsTab(tabName) {
+            // Remove active class from all buttons and panels
+            document.querySelectorAll('.requirements-tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.requirements-tab-panel').forEach(panel => panel.classList.remove('active'));
+            
+            // Add active class to selected button and panel
+            document.querySelector(`.requirements-tab-button[onclick="switchRequirementsTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-requirements-tab`).classList.add('active');
+        }
+        
+        window.switchRequirementsTab = switchRequirementsTab;
+        
+        // Update Task Steps Tab with diary tasks
+        async function updateTaskSteps() {
+            const taskStepsList = document.getElementById('task-steps-list');
+            if (!taskStepsList) return;
+            
+            try {
+                const selectedGoalIds = await getSelectedGoalIdsFromDatabase();
+                
+                // Filter for diary tasks only
+                const diaryTasks = masterGoalsList.filter(goal => 
+                    selectedGoalIds.includes(goal.id) && goal.category === 'Achievement Diary'
+                );
+                
+                if (diaryTasks.length === 0) {
+                    taskStepsList.innerHTML = '<p style="text-align: center; color: #666; margin-top: 50px;">No diary tasks added yet. Add Achievement Diary tasks to see detailed steps here.</p>';
+                    return;
+                }
+                
+                // Group tasks by diary and difficulty
+                const groupedTasks = {};
+                
+                for (const task of diaryTasks) {
+                    // Parse diary task info from the goal ID
+                    const idParts = task.id.split('_');
+                    if (idParts[0] === 'diary' && idParts.length >= 4) {
+                        const diaryId = idParts[1];
+                        const difficulty = idParts[2];
+                        const taskIndex = parseInt(idParts[3]);
+                        
+                        const groupKey = `${diaryId}_${difficulty}`;
+                        if (!groupedTasks[groupKey]) {
+                            groupedTasks[groupKey] = {
+                                diaryId,
+                                difficulty,
+                                tasks: []
+                            };
+                        }
+                        
+                        groupedTasks[groupKey].tasks.push({
+                            index: taskIndex,
+                            goalId: task.id
+                        });
+                    }
+                }
+                
+                let html = '<div class="task-steps-container">';
+                
+                // Create combined sections for each diary difficulty
+                for (const [groupKey, group] of Object.entries(groupedTasks)) {
+                    const diary = typeof getDiaryById !== 'undefined' ? getDiaryById(group.diaryId) : null;
+                    if (diary && diary.difficulties && diary.difficulties[group.difficulty]) {
+                        const difficultyData = diary.difficulties[group.difficulty];
+                        
+                        html += `
+                            <div class="task-step-item">
+                                <div class="task-step-header">
+                                    <h3>${diary.name} - ${group.difficulty.charAt(0).toUpperCase() + group.difficulty.slice(1)}</h3>
+                                    <span class="task-step-region">📍 ${diary.region}</span>
+                                </div>
+                                
+                                <div class="task-step-content">
+                                    <div class="task-description">
+                                        <strong>Tasks (${group.tasks.length}):</strong>
+                                        <ul class="combined-tasks-list">
+                                            ${group.tasks.map(taskRef => {
+                                                const diaryTask = difficultyData.tasks[taskRef.index];
+                                                return `<li>${diaryTask.description}</li>`;
+                                            }).join('')}
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="task-rewards">
+                                        <h4>🏆 Rewards:</h4>
+                                        <ul>
+                                            ${difficultyData.rewards.map(reward => `<li>${reward}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                html += '</div>';
+                taskStepsList.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error updating task steps:', error);
+                taskStepsList.innerHTML = '<p style="text-align: center; color: #d32f2f; margin-top: 50px;">Error loading task steps</p>';
+            }
+        }
+        
+        window.updateTaskSteps = updateTaskSteps;
         
         // Test function to check if stats are in Firestore
         window.checkStatsInFirestore = async function() {
