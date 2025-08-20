@@ -834,6 +834,17 @@
             gap: 40px;
             min-height: 800px;
             position: relative;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .left-page, .right-page {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         .book-pages::before {
@@ -940,12 +951,22 @@
             padding: 30px;
             position: relative;
             z-index: 2;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         .tab-content {
             display: none;
             height: 100%;
+            width: 100%;
+            max-width: 100%;
+            max-height: 60vh;
+            min-height: 400px;
             overflow-y: auto;
+            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         .tab-content.active {
@@ -1358,18 +1379,70 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
         }
 
-        .add-to-todo-btn-small {
-            padding: 3px 8px;
-            font-size: 0.7em;
-            margin-left: 5px;
-            min-width: auto;
-            width: auto;
-            border-radius: 4px;
+        .add-to-todo-btn.add-to-todo-btn-small {
+            padding: 3px !important;
+            font-size: 0.8em !important;
+            margin-left: 4px !important;
+            min-width: 20px !important;
+            width: 20px !important;
+            height: 20px !important;
+            border-radius: 3px !important;
+            flex-shrink: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
         }
 
-        .add-to-todo-btn-small:before {
-            font-size: 0.8em;
-            margin-right: 2px;
+        /* Responsive sizing for stat journal icon buttons */
+        @media (max-width: 1200px) {
+            .add-to-todo-btn.add-to-todo-btn-small {
+                width: 18px !important;
+                height: 18px !important;
+                font-size: 0.7em !important;
+                margin-left: 3px !important;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .add-to-todo-btn.add-to-todo-btn-small {
+                width: 16px !important;
+                height: 16px !important;
+                font-size: 0.6em !important;
+                margin-left: 2px !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .add-to-todo-btn.add-to-todo-btn-small {
+                width: 14px !important;
+                height: 14px !important;
+                font-size: 0.5em !important;
+                margin-left: 2px !important;
+            }
+        }
+
+        /* For larger screens */
+        @media (min-width: 1920px) {
+            .add-to-todo-btn.add-to-todo-btn-small {
+                width: 22px !important;
+                height: 22px !important;
+                font-size: 0.85em !important;
+                margin-left: 5px !important;
+            }
+        }
+
+        @media (min-width: 2560px) {
+            .add-to-todo-btn.add-to-todo-btn-small {
+                width: 24px !important;
+                height: 24px !important;
+                font-size: 0.9em !important;
+                margin-left: 6px !important;
+            }
+        }
+
+        .add-to-todo-btn.add-to-todo-btn-small:before {
+            font-size: 1em !important;
+            margin-right: 0 !important;
         }
 
         /* Skill Level Input Styles */
@@ -2170,6 +2243,31 @@
             opacity: 1;
         }
 
+        /* Mark Complete Button Styles */
+        .mark-complete-btn {
+            background: linear-gradient(135deg, #28a745, #218838);
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-family: 'Cinzel', serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+            opacity: 0.7;
+        }
+
+        .mark-complete-btn:hover {
+            background: linear-gradient(135deg, #218838, #1e7e34);
+            transform: translateY(-1px);
+            opacity: 1;
+        }
+
+        .goal-item:hover .mark-complete-btn {
+            opacity: 1;
+        }
+
         /* Right Page Specific Styles */
         .right-page .tab-content-area {
             border-radius: 0 10px 10px 0;
@@ -2259,20 +2357,26 @@
             box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
         }
         
-        #lookup-btn {
+        #lookup-btn, .lookup-button {
             background: linear-gradient(135deg, #8b4513, #654321);
             color: #f4e4bc;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-radius: 8px;
             font-family: 'MedievalSharp', serif;
             font-size: 1em;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             white-space: nowrap;
+            min-width: 140px;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        #lookup-btn:hover {
+        #lookup-btn:hover, .lookup-button:hover {
             background: linear-gradient(135deg, #654321, #8b4513);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -2349,6 +2453,122 @@
             height: 16px;
             background: linear-gradient(225deg, #b8a888, #a69777);
             border-radius: 0 0 0 2px;
+        }
+
+        /* New Hierarchical Diary List */
+        .diary-list {
+            margin-top: 20px;
+            max-height: 60vh;
+            min-height: 400px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: 1px solid rgba(139, 69, 19, 0.2);
+            border-radius: 8px;
+            background: rgba(244, 228, 188, 0.1);
+            box-sizing: border-box;
+        }
+
+        .diary-entry {
+            background: linear-gradient(135deg, #f4e4bc, #e8d7b0);
+            border: none;
+            border-bottom: 2px solid #8b4513;
+            border-radius: 0;
+            margin-bottom: 0;
+            overflow: hidden;
+        }
+
+        .diary-entry:first-child {
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .diary-entry:last-child {
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            border-bottom: none;
+        }
+
+        .diary-header-item {
+            background: linear-gradient(135deg, #8b4513, #654321);
+            color: #f4e4bc;
+            padding: 15px 20px;
+            font-family: 'MedievalSharp', serif;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-bottom: 2px solid #654321;
+        }
+
+        .diary-difficulties {
+            padding: 10px 0;
+        }
+
+        .difficulty-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(139, 69, 19, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .difficulty-item:last-child {
+            border-bottom: none;
+        }
+
+        .difficulty-item:hover {
+            background: rgba(139, 69, 19, 0.1);
+            transform: translateX(5px);
+        }
+
+        .difficulty-indicator {
+            width: 4px;
+            height: 30px;
+            border-radius: 2px;
+            margin-right: 15px;
+        }
+
+        .difficulty-indicator.easy {
+            background: linear-gradient(135deg, #28a745, #20a039);
+        }
+
+        .difficulty-indicator.medium {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+        }
+
+        .difficulty-indicator.hard {
+            background: linear-gradient(135deg, #fd7e14, #e8690b);
+        }
+
+        .difficulty-indicator.elite {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .difficulty-info {
+            flex: 1;
+        }
+
+        .difficulty-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1em;
+            font-weight: 600;
+            color: #2c1810;
+            margin-bottom: 2px;
+        }
+
+        .difficulty-progress {
+            font-size: 0.85em;
+            color: #8b4513;
+        }
+
+        .difficulty-arrow {
+            color: #8b4513;
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+
+        .difficulty-item:hover .difficulty-arrow {
+            transform: translateX(3px);
         }
 
         /* Diary Detail View */
@@ -2535,6 +2755,12 @@
             border-radius: 5px;
             padding: 20px;
             margin-bottom: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         }
 
         .difficulty-requirements h3 {
@@ -2548,16 +2774,23 @@
             list-style: none;
             padding: 0;
             margin-bottom: 20px;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: calc(60vh - 200px);
+            border: 1px solid rgba(139, 69, 19, 0.2);
+            border-radius: 4px;
+            background: rgba(244, 228, 188, 0.3);
         }
 
         .task-list li {
-            padding: 8px 0;
+            padding: 12px 15px;
             border-bottom: 1px solid rgba(139, 69, 19, 0.2);
             position: relative;
-            padding-left: 25px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            margin: 0;
         }
         
         .task-list li label {
@@ -2569,14 +2802,6 @@
             border-bottom: none;
         }
 
-        .task-list li::before {
-            content: '•';
-            position: absolute;
-            left: 0;
-            color: #8b4513;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
 
         .rewards-section {
             background: rgba(139, 69, 19, 0.05);
@@ -2647,6 +2872,46 @@
             background: linear-gradient(135deg, #f8e8cc, #ecd8bc);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .quest-item.completed {
+            background: linear-gradient(135deg, #d4e6d4, #c8d8c8);
+            border-color: #2e7d32;
+            opacity: 0.8;
+        }
+        
+        .quest-item.completed:hover {
+            background: linear-gradient(135deg, #e8f5e8, #dce8dc);
+            transform: translateY(-1px);
+        }
+        
+        .quest-item.completed .quest-name {
+            text-decoration: line-through;
+            color: #2e7d32;
+        }
+        
+        /* Diary task completion styles */
+        .diary-task-item.completed {
+            background: linear-gradient(135deg, #d4e6d4, #c8d8c8);
+            border-color: #2e7d32;
+            opacity: 0.8;
+        }
+        
+        .diary-task-item.completed .task-description {
+            text-decoration: line-through;
+            color: #2e7d32;
+        }
+        
+        /* Generic completion styles for any item with .completed class */
+        .completed {
+            background: linear-gradient(135deg, #d4e6d4, #c8d8c8) !important;
+            border-color: #2e7d32 !important;
+            opacity: 0.8;
+        }
+        
+        .completed:hover {
+            background: linear-gradient(135deg, #e8f5e8, #dce8dc) !important;
+            transform: translateY(-1px) !important;
         }
         
         .quest-actions {
@@ -2768,15 +3033,65 @@
             grid-auto-flow: column;
             gap: 8px;
             margin-bottom: 20px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* Enhanced responsive breakpoints for larger screens */
+        @media (min-width: 1600px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(8, 1fr);
+                gap: 10px;
+                max-width: 100%;
+            }
+            .stat-item {
+                padding: 8px;
+                font-size: 1.1em;
+            }
+        }
+
+        @media (min-width: 1920px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(8, 1fr);
+                gap: 12px;
+                max-width: 100%;
+            }
+            .stat-item {
+                padding: 10px;
+                font-size: 1.2em;
+            }
+        }
+
+        @media (min-width: 2560px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(6, 1fr);
+                gap: 15px;
+                max-width: 100%;
+            }
+            .stat-item {
+                padding: 12px;
+                font-size: 1.3em;
+            }
         }
 
         .stat-item {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             background: rgba(139, 69, 19, 0.1);
             border: 1px solid #d4c4a0;
             border-radius: 5px;
             padding: 5px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            gap: 2px;
         }
 
         .stat-icon {
@@ -2791,90 +3106,16 @@
             color: #654321;
         }
 
-        /* Gear Panel */
-        .gear-grid {
-            display: grid;
-            grid-template-areas:
-                ". head ."
-                "cape amulet weapon"
-                ". body shield"
-                ". legs ."
-                "hands . feet"
-                "ring . ammo";
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-            max-width: 200px;
-            margin: 0 auto 20px auto;
+        /* Ensure stat content doesn't get compressed by buttons */
+        .stat-item > *:not(.add-to-todo-btn-small) {
+            flex-shrink: 0;
         }
 
-        .gear-slot {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #8b4513;
-            background: rgba(139, 69, 19, 0.1);
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7em;
-            color: #654321;
-            text-align: center;
-            cursor: pointer;
-            transition: background-color 0.3s;
+        .stat-item .add-to-todo-btn-small {
+            flex-shrink: 1;
+            min-width: 0;
         }
 
-        .gear-slot:hover {
-            background: rgba(139, 69, 19, 0.2);
-        }
-
-        .gear-slot.head { grid-area: head; }
-        .gear-slot.cape { grid-area: cape; }
-        .gear-slot.amulet { grid-area: amulet; }
-        .gear-slot.weapon { grid-area: weapon; }
-        .gear-slot.body { grid-area: body; }
-        .gear-slot.shield { grid-area: shield; }
-        .gear-slot.legs { grid-area: legs; }
-        .gear-slot.hands { grid-area: hands; }
-        .gear-slot.feet { grid-area: feet; }
-        .gear-slot.ring { grid-area: ring; }
-        .gear-slot.ammo { grid-area: ammo; }
-
-        /* Equipment Selector */
-        .equipment-search {
-            width: 100%;
-            background: rgba(244, 228, 188, 0.8);
-            border: 2px solid #8b4513;
-            border-radius: 5px;
-            padding: 10px;
-            font-family: 'Cinzel', serif;
-            font-size: 1em;
-            color: #2c1810;
-            margin-bottom: 10px;
-        }
-
-        .search-results {
-            background: rgba(244, 228, 188, 0.9);
-            border: 1px solid #8b4513;
-            border-radius: 5px;
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-        }
-
-        .search-result-item {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid rgba(139, 69, 19, 0.2);
-            transition: background-color 0.3s;
-        }
-
-        .search-result-item:hover {
-            background: rgba(139, 69, 19, 0.2);
-        }
-
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
 
         /* Responsive Design */
         @media (max-width: 1024px) {
@@ -2892,9 +3133,63 @@
             }
         }
 
+        /* Additional responsive breakpoints for stats grid */
+        @media (max-width: 1400px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(8, 1fr);
+                gap: 6px;
+            }
+            .stat-item {
+                padding: 4px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(8, 1fr);
+                gap: 5px;
+            }
+            .stat-item {
+                padding: 3px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: auto;
+                gap: 4px;
+            }
+            .stat-item {
+                padding: 3px;
+                font-size: 0.85em;
+            }
+        }
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: auto;
+                gap: 3px;
+            }
+            .stat-item {
+                padding: 2px;
+                font-size: 0.8em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                gap: 2px;
+            }
+            .stat-item {
+                padding: 2px;
+                font-size: 0.75em;
             }
             
             .tab-navigation {
@@ -2905,6 +3200,457 @@
                 font-size: 0.7em;
                 padding: 10px 3px;
                 min-height: 60px;
+            }
+        }
+
+        /* Comprehensive Responsive Design */
+        
+        /* Large Screens - 4K and Ultra-wide */
+        @media (min-width: 2560px) {
+            .journal-container {
+                max-width: 2200px;
+                padding: 60px;
+            }
+            
+            .book-title {
+                font-size: 3.5em;
+            }
+            
+            .tab-button, .tab-button-right {
+                font-size: 1.2em;
+                padding: 20px 15px;
+                min-height: 120px;
+            }
+            
+            .tab-content {
+                font-size: 1.2em;
+                padding: 40px;
+            }
+            
+            .section-title {
+                font-size: 2.5em;
+            }
+        }
+        
+        /* Large Screens - 1440p */
+        @media (min-width: 1920px) and (max-width: 2559px) {
+            .journal-container {
+                max-width: 1800px;
+                padding: 50px;
+            }
+            
+            .book-title {
+                font-size: 3em;
+            }
+            
+            .tab-button, .tab-button-right {
+                font-size: 1.1em;
+                padding: 18px 12px;
+                min-height: 100px;
+            }
+            
+            .tab-content {
+                font-size: 1.1em;
+                padding: 35px;
+            }
+            
+            .section-title {
+                font-size: 2.2em;
+            }
+        }
+        
+        /* Standard Large Screens - 1080p */
+        @media (min-width: 1600px) and (max-width: 1919px) {
+            .journal-container {
+                max-width: 1500px;
+                padding: 40px;
+            }
+            
+            .book-title {
+                font-size: 2.5em;
+            }
+            
+            .tab-button, .tab-button-right {
+                font-size: 1em;
+                padding: 16px 10px;
+                min-height: 90px;
+            }
+            
+            .tab-content {
+                font-size: 1.05em;
+                padding: 30px;
+            }
+        }
+        
+        /* Medium Large Screens */
+        @media (min-width: 1400px) and (max-width: 1599px) {
+            .journal-container {
+                max-width: 1300px;
+                padding: 35px;
+            }
+            
+            .book-title {
+                font-size: 2.2em;
+            }
+            
+            .tab-content {
+                padding: 25px;
+            }
+        }
+        
+        /* Standard Desktop */
+        @media (min-width: 1200px) and (max-width: 1399px) {
+            .journal-container {
+                max-width: 1100px;
+                padding: 30px;
+            }
+            
+            .book-title {
+                font-size: 2em;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+        }
+        
+        /* Small Desktop / Large Tablet */
+        @media (min-width: 900px) and (max-width: 1199px) {
+            .journal-container {
+                padding: 25px;
+            }
+            
+            .book-title {
+                font-size: 1.8em;
+            }
+            
+            .tab-button, .tab-button-right {
+                font-size: 0.9em;
+                padding: 12px 8px;
+                min-height: 70px;
+            }
+            
+            .tab-content {
+                padding: 18px;
+                font-size: 0.95em;
+            }
+            
+            /* Quest and diary items */
+            .quest-item, .diary-item {
+                padding: 12px;
+                margin-bottom: 8px;
+            }
+            
+            /* Modal adjustments */
+            .modal-content {
+                width: 85%;
+                max-width: 500px;
+                padding: 20px;
+            }
+        }
+        
+        /* Tablet Portrait */
+        @media (min-width: 768px) and (max-width: 899px) {
+            .journal-container {
+                padding: 20px;
+            }
+            
+            .book-title {
+                font-size: 1.6em;
+            }
+            
+            .tab-button, .tab-button-right {
+                font-size: 0.8em;
+                padding: 10px 6px;
+                min-height: 65px;
+            }
+            
+            .tab-content {
+                padding: 15px;
+                font-size: 0.9em;
+            }
+            
+            /* Quest and diary items */
+            .quest-item, .diary-item {
+                padding: 10px;
+                margin-bottom: 6px;
+            }
+            
+            .quest-info h3, .diary-info h3 {
+                font-size: 1.1em;
+            }
+            
+            .quest-info p, .diary-info p {
+                font-size: 0.85em;
+            }
+            
+            /* Buttons */
+            .add-to-todo-btn {
+                font-size: 0.7em;
+                padding: 4px 8px;
+                min-width: 80px;
+            }
+            
+            /* Modal adjustments */
+            .modal-content {
+                width: 90%;
+                max-width: 400px;
+                padding: 18px;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .modal-button {
+                width: 100%;
+            }
+            
+            /* Universal tab content tablet adjustments */
+            .tab-content {
+                max-height: 55vh !important;
+                min-height: 350px !important;
+            }
+            
+            /* Diary list tablet adjustments */
+            .diary-list {
+                max-height: 55vh !important;
+                min-height: 350px !important;
+            }
+            
+            /* Difficulty task list tablet adjustments */
+            .difficulty-requirements {
+                max-height: 55vh !important;
+            }
+            
+            .task-list {
+                max-height: calc(55vh - 180px) !important;
+            }
+        }
+        
+        /* Mobile Landscape / Small Tablet */
+        @media (min-width: 576px) and (max-width: 767px) {
+            .journal-container {
+                padding: 15px;
+            }
+            
+            .book-title {
+                font-size: 1.4em;
+            }
+            
+            .tab-navigation {
+                width: 45px;
+            }
+            
+            .tab-button, .tab-button-right {
+                font-size: 0.7em;
+                padding: 8px 4px;
+                min-height: 60px;
+            }
+            
+            .tab-content {
+                padding: 12px;
+                font-size: 0.85em;
+            }
+            
+            /* Quest and diary items */
+            .quest-item, .diary-item {
+                padding: 8px;
+                margin-bottom: 4px;
+            }
+            
+            .quest-info h3, .diary-info h3 {
+                font-size: 1em;
+            }
+            
+            .quest-info p, .diary-info p {
+                font-size: 0.8em;
+            }
+            
+            /* Buttons */
+            .add-to-todo-btn {
+                font-size: 0.65em;
+                padding: 3px 6px;
+                min-width: 70px;
+            }
+            
+            /* Modal adjustments */
+            .modal-content {
+                width: 95%;
+                max-width: 350px;
+                padding: 15px;
+            }
+            
+            .modal-title {
+                font-size: 1.3em;
+            }
+        }
+        
+        /* Mobile Portrait */
+        @media (max-width: 575px) {
+            .journal-container {
+                padding: 10px;
+            }
+            
+            .book-title {
+                font-size: 1.2em;
+            }
+            
+            .tab-navigation {
+                width: 40px;
+            }
+            
+            .tab-button, .tab-button-right {
+                font-size: 0.6em;
+                padding: 6px 2px;
+                min-height: 50px;
+                writing-mode: vertical-rl;
+                text-orientation: mixed;
+            }
+            
+            .tab-content {
+                padding: 10px;
+                font-size: 0.8em;
+            }
+            
+            /* Quest and diary items */
+            .quest-item, .diary-item {
+                padding: 6px;
+                margin-bottom: 3px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .quest-info, .diary-info {
+                width: 100%;
+            }
+            
+            .quest-actions, .diary-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .quest-info h3, .diary-info h3 {
+                font-size: 0.9em;
+            }
+            
+            .quest-info p, .diary-info p {
+                font-size: 0.75em;
+                line-height: 1.3;
+            }
+            
+            /* Buttons */
+            .add-to-todo-btn {
+                font-size: 0.6em;
+                padding: 2px 4px;
+                min-width: 60px;
+            }
+            
+            .difficulty-badge {
+                font-size: 0.65em;
+                padding: 2px 6px;
+            }
+            
+            /* Modal adjustments */
+            .modal-content {
+                width: 98%;
+                max-width: 300px;
+                padding: 12px;
+                margin: 10px;
+            }
+            
+            .modal-title {
+                font-size: 1.2em;
+            }
+            
+            .modal-text {
+                font-size: 0.85em;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .modal-button {
+                width: 100%;
+                font-size: 0.8em;
+                padding: 8px;
+            }
+            
+            /* To-Do List adjustments */
+            .goal-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .goal-label {
+                font-size: 0.8em;
+                line-height: 1.3;
+            }
+            
+            .mark-complete-btn, .remove-goal-btn {
+                font-size: 0.6em !important;
+                padding: 1px 3px !important;
+            }
+            
+            /* Requirements display */
+            .requirements-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .requirement-section {
+                padding: 8px;
+            }
+            
+            .requirement-section h4 {
+                font-size: 0.9em;
+            }
+            
+            .item-list, .skill-list {
+                font-size: 0.75em;
+            }
+            
+            /* Universal tab content mobile adjustments */
+            .tab-content {
+                max-height: 50vh !important;
+                min-height: 300px !important;
+            }
+            
+            /* Diary list mobile adjustments */
+            .diary-list {
+                max-height: 50vh !important;
+                min-height: 300px !important;
+            }
+            
+            .difficulty-item {
+                padding: 8px 15px !important;
+            }
+            
+            .difficulty-name {
+                font-size: 0.9em !important;
+            }
+            
+            .difficulty-progress {
+                font-size: 0.75em !important;
+            }
+            
+            /* Difficulty task list mobile adjustments */
+            .difficulty-requirements {
+                max-height: 50vh !important;
+                padding: 15px !important;
+            }
+            
+            .task-list {
+                max-height: calc(50vh - 150px) !important;
+            }
+            
+            .task-list li {
+                padding: 8px 10px !important;
             }
         }
         
@@ -2939,24 +3685,6 @@
             box-shadow: 0 0 5px rgba(139, 69, 19, 0.3);
         }
         
-        .lookup-button {
-            background: linear-gradient(135deg, #8b4513, #654321);
-            color: #f4e4bc;
-            border: none;
-            border-radius: 5px;
-            padding: 12px 20px;
-            font-family: 'Cinzel', serif;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .lookup-button:hover {
-            background: linear-gradient(135deg, #654321, #5d4037);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
         
         
         .group-stats-container {
@@ -3463,8 +4191,8 @@
                             <div style="margin-bottom: 15px;">
                                 <span id="diary-progress-summary" style="color: #2c1810; font-weight: bold;"></span>
                             </div>
-                            <div class="diaries-grid" id="diaries-grid">
-                                <!-- Diary tiles will be populated dynamically -->
+                            <div class="diary-list" id="diary-list">
+                                <!-- Diary list will be populated dynamically -->
                             </div>
                         </div>
                         
@@ -3618,6 +4346,11 @@
             // Update task steps when switching to todo tab
             if (tabName === 'todo') {
                 updateTaskSteps();
+            }
+            
+            // Add stats buttons when switching to stats tab
+            if (tabName === 'stats') {
+                setTimeout(addStatsButtons, 100);
             }
         }
 
@@ -4560,102 +5293,6 @@ if (typeof module !== 'undefined' && module.exports) {
             window.open(wikiUrl, '_blank');
         }
 
-        // Equipment search functionality
-        const equipmentItems = [
-            { name: 'Dragon scimitar', slot: 'weapon' },
-            { name: 'Amulet of fury', slot: 'amulet' },
-            { name: 'Bandos chestplate', slot: 'body' },
-            { name: 'Abyssal whip', slot: 'weapon' },
-            { name: 'Fire cape', slot: 'cape' },
-            { name: 'Dragon boots', slot: 'feet' },
-            { name: 'Barrows gloves', slot: 'hands' },
-            { name: 'Slayer helmet', slot: 'head' },
-            { name: 'Dragon platelegs', slot: 'legs' },
-            { name: 'Berserker ring', slot: 'ring' },
-            { name: 'Dragon defender', slot: 'shield' },
-            { name: 'Rune arrows', slot: 'ammo' },
-            { name: 'Bandos tassets', slot: 'legs' },
-            { name: 'Primordial boots', slot: 'feet' },
-            { name: 'Amulet of torture', slot: 'amulet' },
-            { name: 'Fighter torso', slot: 'body' },
-            { name: 'Infernal cape', slot: 'cape' },
-            { name: 'Void knight helm', slot: 'head' },
-            { name: 'Granite maul', slot: 'weapon' },
-            { name: 'Ring of wealth', slot: 'ring' },
-            { name: 'Magic shortbow', slot: 'weapon' },
-            { name: 'Dragon crossbow', slot: 'weapon' },
-            { name: 'Obsidian cape', slot: 'cape' },
-            { name: 'Combat bracelet', slot: 'hands' },
-            { name: 'Dragon chainbody', slot: 'body' },
-            { name: 'Rune platebody', slot: 'body' },
-            { name: 'Mystic robe top', slot: 'body' },
-            { name: 'Staff of fire', slot: 'weapon' },
-            { name: 'Wizard hat', slot: 'head' },
-            { name: 'Leather boots', slot: 'feet' }
-        ];
-
-        function searchItems() {
-            const searchInput = document.getElementById('equipment-search');
-            const resultsDiv = document.getElementById('search-results');
-            
-            // Return early if elements don't exist
-            if (!searchInput || !resultsDiv) {
-                return;
-            }
-            
-            const query = searchInput.value.toLowerCase();
-            
-            if (query.length === 0) {
-                resultsDiv.style.display = 'none';
-                return;
-            }
-            
-            const filteredItems = equipmentItems.filter(item => 
-                item.name.toLowerCase().includes(query)
-            );
-            
-            if (filteredItems.length > 0) {
-                resultsDiv.innerHTML = '';
-                filteredItems.forEach(item => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'search-result-item';
-                    itemDiv.textContent = `${item.name} (${item.slot})`;
-                    itemDiv.onclick = () => selectItem(item);
-                    resultsDiv.appendChild(itemDiv);
-                });
-                resultsDiv.style.display = 'block';
-            } else {
-                resultsDiv.innerHTML = '<div class="search-result-item">No items found</div>';
-                resultsDiv.style.display = 'block';
-            }
-        }
-
-        function selectItem(item) {
-            console.log('Selected item:', item);
-            const searchInput = document.getElementById('equipment-search');
-            const resultsDiv = document.getElementById('search-results');
-            
-            if (searchInput) {
-                searchInput.value = item.name;
-            }
-            if (resultsDiv) {
-                resultsDiv.style.display = 'none';
-            }
-            // TODO: Add functionality to equip item to gear slot
-        }
-
-        // Hide search results when clicking outside
-        document.addEventListener('click', function(event) {
-            const searchInput = document.getElementById('equipment-search');
-            const resultsDiv = document.getElementById('search-results');
-            
-            // Only run if both elements exist
-            if (searchInput && resultsDiv) {
-                if (!searchInput.contains(event.target) && !resultsDiv.contains(event.target)) {
-                    resultsDiv.style.display = 'none';
-                }
-            }
-        });
 
         // Character lookup functionality
         // User lookup functionality removed - keeping only hiscores data structures
@@ -4710,13 +5347,16 @@ if (typeof module !== 'undefined' && module.exports) {
                 <div class="difficulty-requirements">
                     <h3>Tasks to Complete</h3>
                     <ul class="task-list">
-                        ${difficultyData.tasks.map((task, index) => 
-                            `<li>
+                        ${difficultyData.tasks.map((task, index) => {
+                            const isCompleted = localStorage.getItem(`diary_${currentDiary}_${difficulty}_${index}`) === 'true';
+                            return `<li class="diary-task-item${isCompleted ? ' completed' : ''}">
                                 <input type="checkbox" id="task-${currentDiary}-${difficulty}-${index}" 
+                                       ${isCompleted ? 'checked' : ''}
                                        onchange="toggleTaskComplete('${currentDiary}', '${difficulty}', ${index})">
-                                <label for="task-${currentDiary}-${difficulty}-${index}">${task.description}</label>
+                                <label for="task-${currentDiary}-${difficulty}-${index}" class="task-description">${task.description}</label>
                                 <button class="add-to-todo-btn" onclick="openTodoModal('diary', '${currentDiary}', '${difficulty}', ${index})">Add to Journal</button>
-                            </li>`
+                            </li>`;
+                        }
                         ).join('')}
                     </ul>
                     
@@ -4738,32 +5378,87 @@ if (typeof module !== 'undefined' && module.exports) {
 
         // New functions for dynamic diary system
         function populateDiaryTiles() {
-            const diariesGrid = document.getElementById('diaries-grid');
-            if (!diariesGrid) return;
+            const diaryList = document.getElementById('diary-list');
+            if (!diaryList) return;
 
-            diariesGrid.innerHTML = '';
+            diaryList.innerHTML = '';
             
             const diaries = getAllDiaries();
             diaries.forEach(diary => {
-                const progress = calculateDiaryProgress(diary.id);
-                const tile = document.createElement('div');
-                tile.className = 'diary-tile';
-                tile.setAttribute('data-diary-id', diary.id);
-                tile.onclick = () => openDiary(diary.id);
+                const diaryEntry = document.createElement('div');
+                diaryEntry.className = 'diary-entry';
                 
-                tile.innerHTML = `
-                    <div class="diary-icon">📜</div>
-                    <h3>${diary.name}</h3>
-                    <div class="diary-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${progress.percentage}%"></div>
-                        </div>
-                        <span class="progress-text">${progress.completed}/${progress.total} tasks</span>
-                    </div>
-                `;
+                // Create diary header
+                const diaryHeader = document.createElement('div');
+                diaryHeader.className = 'diary-header-item';
+                diaryHeader.textContent = diary.name;
                 
-                diariesGrid.appendChild(tile);
+                // Create difficulties container
+                const difficultiesContainer = document.createElement('div');
+                difficultiesContainer.className = 'diary-difficulties';
+                
+                // Add each difficulty level
+                const difficulties = ['easy', 'medium', 'hard', 'elite'];
+                difficulties.forEach(difficulty => {
+                    if (diary.difficulties && diary.difficulties[difficulty]) {
+                        const difficultyProgress = calculateDifficultyProgress(diary.id, difficulty);
+                        
+                        const difficultyItem = document.createElement('div');
+                        difficultyItem.className = 'difficulty-item';
+                        difficultyItem.onclick = () => openDiaryDifficulty(diary.id, difficulty);
+                        
+                        difficultyItem.innerHTML = `
+                            <div class="difficulty-indicator ${difficulty}"></div>
+                            <div class="difficulty-info">
+                                <div class="difficulty-name">${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</div>
+                                <div class="difficulty-progress">${difficultyProgress.completed}/${difficultyProgress.total} tasks completed</div>
+                            </div>
+                            <div class="difficulty-arrow">→</div>
+                        `;
+                        
+                        difficultiesContainer.appendChild(difficultyItem);
+                    }
+                });
+                
+                diaryEntry.appendChild(diaryHeader);
+                diaryEntry.appendChild(difficultiesContainer);
+                diaryList.appendChild(diaryEntry);
             });
+        }
+
+        // Helper function to calculate progress for a specific difficulty
+        function calculateDifficultyProgress(diaryId, difficulty) {
+            const diary = getAllDiaries().find(d => d.id === diaryId);
+            if (!diary || !diary.difficulties || !diary.difficulties[difficulty]) {
+                return { completed: 0, total: 0, percentage: 0 };
+            }
+
+            const tasks = diary.difficulties[difficulty].tasks;
+            const total = tasks.length;
+            let completed = 0;
+
+            tasks.forEach((task, index) => {
+                const storageKey = `diary_${diaryId}_${difficulty}_${index}`;
+                if (localStorage.getItem(storageKey) === 'true') {
+                    completed++;
+                }
+            });
+
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+            return { completed, total, percentage };
+        }
+
+        // New function to open a specific diary difficulty
+        function openDiaryDifficulty(diaryId, difficulty) {
+            // Set current diary and difficulty
+            currentDiary = diaryId;
+            currentDifficulty = difficulty;
+            
+            // Hide main view and show difficulty detail view directly
+            document.getElementById('diary-main-view').style.display = 'none';
+            
+            // Show the difficulty detail view (reuse existing showDifficulty function)
+            showDifficulty(difficulty);
         }
 
         function calculateDiaryProgress(diaryId) {
@@ -4790,10 +5485,29 @@ if (typeof module !== 'undefined' && module.exports) {
         function toggleTaskComplete(diaryId, difficulty, taskIndex) {
             const storageKey = `diary_${diaryId}_${difficulty}_${taskIndex}`;
             const isCompleted = localStorage.getItem(storageKey) === 'true';
-            localStorage.setItem(storageKey, (!isCompleted).toString());
+            const newCompletedState = !isCompleted;
+            localStorage.setItem(storageKey, newCompletedState.toString());
+            
+            // Add visual feedback to diary task
+            updateDiaryTaskVisualState(diaryId, difficulty, taskIndex, newCompletedState);
             
             // Always update progress display automatically
             updateDiaryProgress();
+        }
+        
+        function updateDiaryTaskVisualState(diaryId, difficulty, taskIndex, completed) {
+            // Find the checkbox and its parent container
+            const checkbox = document.getElementById(`task-${diaryId}-${difficulty}-${taskIndex}`);
+            if (checkbox) {
+                const taskContainer = checkbox.closest('.diary-task-item') || checkbox.closest('li') || checkbox.closest('div');
+                if (taskContainer) {
+                    if (completed) {
+                        taskContainer.classList.add('completed');
+                    } else {
+                        taskContainer.classList.remove('completed');
+                    }
+                }
+            }
         }
         
         function updateDiaryProgress() {
@@ -4865,7 +5579,8 @@ if (typeof module !== 'undefined' && module.exports) {
             questIds.forEach(questId => {
                 const quest = QUESTS_DATABASE[questId];
                 const questItem = document.createElement('div');
-                questItem.className = 'quest-item';
+                const isCompleted = localStorage.getItem(`quest_${questId}_completed`) === 'true';
+                questItem.className = `quest-item${isCompleted ? ' completed' : ''}`;
                 questItem.setAttribute('data-quest-id', questId);
                 questItem.onclick = () => openQuest(questId);
                 
@@ -4936,7 +5651,7 @@ if (typeof module !== 'undefined' && module.exports) {
                     <h3>Completion Status</h3>
                     <label class="completion-checkbox">
                         <input type="checkbox" id="quest-completed-${questId}" 
-                               ${quest.completed ? 'checked' : ''} 
+                               ${localStorage.getItem(`quest_${questId}_completed`) === 'true' ? 'checked' : ''} 
                                onchange="toggleQuestCompleted('${questId}')">
                         Mark as completed
                     </label>
@@ -4946,13 +5661,39 @@ if (typeof module !== 'undefined' && module.exports) {
             document.getElementById('quest-content').innerHTML = content;
         }
 
+        function toggleQuestCompletion(questId) {
+            const storageKey = `quest_${questId}_completed`;
+            const isCompleted = localStorage.getItem(storageKey) === 'true';
+            const newCompletedState = !isCompleted;
+            localStorage.setItem(storageKey, newCompletedState.toString());
+            return newCompletedState;
+        }
+
         function toggleQuestCompleted(questId) {
             const completed = toggleQuestCompletion(questId);
             console.log(`${QUESTS_DATABASE[questId].name} marked as ${completed ? 'completed' : 'incomplete'}`);
             
+            // Add visual feedback to quest item
+            updateQuestItemVisualState(questId, completed);
+            
             // Update the quest display
             filterQuests();
             updateQuestProgress();
+        }
+        
+        function updateQuestItemVisualState(questId, completed) {
+            // Find quest item in the quest list
+            const questItems = document.querySelectorAll('.quest-item');
+            questItems.forEach(item => {
+                const questButton = item.querySelector(`button[onclick*="'${questId}'"]`);
+                if (questButton) {
+                    if (completed) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.remove('completed');
+                    }
+                }
+            });
         }
 
         function updateQuestProgress() {
@@ -6416,6 +7157,7 @@ if (typeof module !== 'undefined' && module.exports) {
                                     ${goal.slayerLevel ? `(${goal.slayerLevel} Slayer)` : ''}
                                 </span>
                             </div>
+                            <button class="mark-complete-btn" onclick="markGoalComplete('${goal.id}')" title="Mark as complete">Mark Complete</button>
                             <button class="remove-goal-btn" onclick="openRemoveModal('${goal.id}')" title="Remove from To-Do list">Remove</button>
                         </div>
                     `;
@@ -6877,6 +7619,86 @@ if (typeof module !== 'undefined' && module.exports) {
         }
 
         /**
+         * Mark a goal as complete and remove it from the To-Do list
+         * @param {string} goalId - The ID of the goal to mark complete
+         */
+        async function markGoalComplete(goalId) {
+            try {
+                // Find the goal in the master goals list
+                const goal = masterGoalsList.find(g => g.id === goalId);
+                if (!goal) {
+                    console.error('Goal not found:', goalId);
+                    return;
+                }
+
+                // Mark the goal as complete based on its type
+                if (goal.category === 'Quest' || goal.category === 'Miniquest') {
+                    // Extract the actual quest ID from the goal ID (remove 'quest_' prefix)
+                    const actualQuestId = goalId.replace('quest_', '');
+                    
+                    // Always update localStorage first
+                    const storageKey = `quest_${actualQuestId}_completed`;
+                    localStorage.setItem(storageKey, 'true');
+                    console.log(`Marked quest ${actualQuestId} as completed in localStorage`);
+                    
+                    // Then try to update the checkbox if it exists
+                    const questCheckbox = document.getElementById(`quest-completed-${actualQuestId}`);
+                    if (questCheckbox) {
+                        questCheckbox.checked = true;
+                        // Update visual state immediately
+                        updateQuestItemVisualState(actualQuestId, true);
+                    }
+                    
+                    // Always refresh the quest display to show completion
+                    if (typeof filterQuests === 'function') {
+                        filterQuests();
+                    }
+                    
+                    // Update quest progress
+                    if (typeof updateQuestProgress === 'function') {
+                        updateQuestProgress();
+                    }
+                } else if (goal.category === 'Achievement Diary') {
+                    // Parse diary task ID to get components
+                    const match = goalId.match(/^diary_(.+)_(.+)_(\d+)$/);
+                    if (match) {
+                        const [, diaryId, difficulty, taskIndex] = match;
+                        // Check if task is already completed
+                        const storageKey = `diary_${diaryId}_${difficulty}_${taskIndex}`;
+                        if (localStorage.getItem(storageKey) !== 'true') {
+                            // Mark diary task as complete
+                            toggleTaskComplete(diaryId, difficulty, parseInt(taskIndex));
+                        }
+                    }
+                } else if (goal.category === 'Slayer') {
+                    // For custom slayer goals, mark as complete in localStorage
+                    const customGoals = JSON.parse(localStorage.getItem('customSkillGoals') || '[]');
+                    const customGoalIndex = customGoals.findIndex(g => g.id === goalId);
+                    if (customGoalIndex !== -1) {
+                        customGoals[customGoalIndex].completed = true;
+                        localStorage.setItem('customSkillGoals', JSON.stringify(customGoals));
+                    }
+                }
+
+                // Remove from To-Do list
+                await saveGoalSelectionToDatabase(goalId, false);
+                
+                // Refresh all relevant UI components
+                await populateGoalsList();
+                await updateRequirements();
+                await updateTaskSteps();
+                resetButtonState(goalId);
+                
+                console.log(`Marked "${goal.name}" as complete and removed from To-Do list`);
+                showToDoFeedback('Marked complete and removed from To-Do list', 'success');
+                
+            } catch (error) {
+                console.error('Error marking goal complete:', error);
+                showToDoFeedback('Error marking goal complete', 'error');
+            }
+        }
+
+        /**
          * Get current skill level from stats display
          * @param {string} skillName - The skill name (lowercase)
          * @returns {number} Current skill level
@@ -6995,10 +7817,8 @@ if (typeof module !== 'undefined' && module.exports) {
                         showToDoFeedback('Added to To-Do list!', 'success');
                     }
                     
-                    // Refresh the goals display if we're on the todo tab
-                    if (document.getElementById('todo-tab').classList.contains('active')) {
-                        await populateGoalsList();
-                    }
+                    // Always refresh the goals display
+                    await populateGoalsList();
                     
                     // Update requirements after adding goal
                     await updateRequirements();
@@ -7112,14 +7932,16 @@ if (typeof module !== 'undefined' && module.exports) {
                 if (index < skillNames.length) {
                     const skillName = skillNames[index];
                     
-                    // Check if button already exists
-                    if (!item.querySelector('.add-to-todo-btn-small')) {
-                        const button = document.createElement('button');
-                        button.className = 'add-to-todo-btn add-to-todo-btn-small';
-                        button.textContent = 'Journal';
-                        button.onclick = () => openTodoModal('skill', skillName);
-                        item.appendChild(button);
-                    }
+                    // Remove any existing buttons to ensure consistency
+                    const existingButtons = item.querySelectorAll('.add-to-todo-btn');
+                    existingButtons.forEach(btn => btn.remove());
+                    
+                    // Add new button with consistent styling
+                    const button = document.createElement('button');
+                    button.className = 'add-to-todo-btn add-to-todo-btn-small';
+                    button.textContent = '';
+                    button.onclick = () => openTodoModal('skill', skillName);
+                    item.appendChild(button);
                 }
             });
         }
