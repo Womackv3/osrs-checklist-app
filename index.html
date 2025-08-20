@@ -5470,8 +5470,15 @@ if (typeof module !== 'undefined' && module.exports) {
             
             // Check if any members are using approximated data (fallback)
             const usingApproximatedData = groupData.members.some(member => {
+                // Skip members without skills data (from group page or not found)
+                if (!member.skills || member.notOnHiscores || member.fromGroupPage) {
+                    return false;
+                }
+                
                 // Check if skills data looks generated (all levels similar)
                 const skillLevels = Object.values(member.skills).map(skill => parseInt(skill.level));
+                if (skillLevels.length === 0) return false;
+                
                 const avgLevel = skillLevels.reduce((sum, level) => sum + level, 0) / skillLevels.length;
                 const levelVariation = Math.max(...skillLevels) - Math.min(...skillLevels);
                 return levelVariation < 20; // Generated data typically has low variation
