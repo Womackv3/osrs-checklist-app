@@ -519,6 +519,8 @@
                 setTimeout(async () => {
                     await populateGoalsList();
                     await updateRequirements();
+            await updateTaskSteps();
+                    await updateTaskSteps();
                 }, 100);
             });
 
@@ -560,6 +562,9 @@
                     setTimeout(async () => {
                         await populateGoalsList();
                         await updateRequirements();
+                        await updateTaskSteps();
+            await updateTaskSteps();
+                    await updateTaskSteps();
                     }, 100);
                 }
             });
@@ -832,7 +837,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 40px;
-            min-height: 800px;
+            min-height: 900px;
             position: relative;
             width: 100%;
             max-width: 100%;
@@ -959,11 +964,10 @@
 
         .tab-content {
             display: none;
-            height: 100%;
+            height: calc(100vh - 200px);
             width: 100%;
             max-width: 100%;
-            max-height: 60vh;
-            min-height: 400px;
+            min-height: 600px;
             overflow-y: auto;
             overflow-x: hidden;
             box-sizing: border-box;
@@ -999,7 +1003,7 @@
         /* Notes Tab Styles */
         .notes-textarea {
             width: 100%;
-            height: 400px;
+            height: 600px;
             background: rgba(244, 228, 188, 0.8);
             border: 2px solid #8b4513;
             border-radius: 5px;
@@ -1562,7 +1566,7 @@
         }
         
         #requirements-container {
-            height: 55%;
+            height: 75%;
             background: rgba(244, 228, 188, 0.3);
             border: 2px inset #8b4513;
             border-radius: 8px;
@@ -1621,6 +1625,10 @@
             box-sizing: border-box;
         }
         
+        .requirements-tab-panel {
+            display: none;
+        }
+        
         .requirements-tab-panel.active {
             display: block;
         }
@@ -1631,11 +1639,6 @@
         }
         
         /* Task Steps Styling */
-        #task-steps-list {
-            height: 100%;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
         
         .task-steps-container {
             max-height: 380px;
@@ -2030,6 +2033,13 @@
         
         #slayer-tab h1 {
             margin-bottom: 15px;
+        }
+        
+        #skill-requirements {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            height: 100%;
         }
         
         .requirements-grid {
@@ -3409,8 +3419,8 @@
             
             /* Universal tab content tablet adjustments */
             .tab-content {
-                max-height: 55vh !important;
-                min-height: 350px !important;
+                height: calc(100vh - 180px) !important;
+                min-height: 500px !important;
             }
             
             /* Diary list tablet adjustments */
@@ -3617,8 +3627,8 @@
             
             /* Universal tab content mobile adjustments */
             .tab-content {
-                max-height: 50vh !important;
-                min-height: 300px !important;
+                height: calc(100vh - 160px) !important;
+                min-height: 400px !important;
             }
             
             /* Diary list mobile adjustments */
@@ -3928,8 +3938,10 @@
                     <div id="notes-tab" class="tab-content active">
                         <h1>Personal Notes</h1>
                         <textarea id="personal-notes" class="notes-textarea" placeholder="Write your OSRS notes here... (automatically saved)"></textarea>
-                        <button class="save-button" onclick="saveNotes()">Save Notes</button>
-                        <p id="save-status" style="margin-top: 10px; color: #8b4513; font-style: italic;"></p>
+                        <p style="margin-top: 15px; color: #8b4513; font-style: italic; text-align: center; font-size: 0.9em;">
+                            💾 Your notes are automatically saved as you type
+                        </p>
+                        <p id="save-status" style="margin-top: 5px; color: #8b4513; font-style: italic; text-align: center; font-size: 0.8em;"></p>
                     </div>
 
                     <!-- Slayer Tab -->
@@ -4196,38 +4208,6 @@
                             </div>
                         </div>
                         
-                        <div id="diary-detail-view" style="display: none;">
-                            <div class="diary-header">
-                                <button class="back-button" onclick="closeDiary()">← Back to Diaries</button>
-                                <h1 id="diary-title"></h1>
-                            </div>
-                            <div class="difficulty-tiles">
-                                <div class="difficulty-tile easy" onclick="showDifficulty('easy')">
-                                    <div class="tile-corner"></div>
-                                    <div class="tile-icon">📝</div>
-                                    <h3>Easy</h3>
-                                    <p>Beginner tasks</p>
-                                </div>
-                                <div class="difficulty-tile medium" onclick="showDifficulty('medium')">
-                                    <div class="tile-corner"></div>
-                                    <div class="tile-icon">📜</div>
-                                    <h3>Medium</h3>
-                                    <p>Intermediate tasks</p>
-                                </div>
-                                <div class="difficulty-tile hard" onclick="showDifficulty('hard')">
-                                    <div class="tile-corner"></div>
-                                    <div class="tile-icon">📋</div>
-                                    <h3>Hard</h3>
-                                    <p>Advanced tasks</p>
-                                </div>
-                                <div class="difficulty-tile elite" onclick="showDifficulty('elite')">
-                                    <div class="tile-corner"></div>
-                                    <div class="tile-icon">📖</div>
-                                    <h3>Elite</h3>
-                                    <p>Master tasks</p>
-                                </div>
-                            </div>
-                        </div>
 
                         <div id="difficulty-detail-view" style="display: none;">
                             <div class="difficulty-header">
@@ -4348,6 +4328,18 @@
                 updateTaskSteps();
             }
             
+            // Show main diary view when switching to diaries tab
+            if (tabName === 'diaries') {
+                const mainView = document.getElementById('diary-main-view');
+                const detailView = document.getElementById('difficulty-detail-view');
+                if (mainView && detailView) {
+                    mainView.style.display = 'block';
+                    detailView.style.display = 'none';
+                    currentDiary = null;
+                    populateDiaryTiles();
+                }
+            }
+            
             // Add stats buttons when switching to stats tab
             if (tabName === 'stats') {
                 setTimeout(addStatsButtons, 100);
@@ -4355,18 +4347,6 @@
         }
 
         // Notes functionality with localStorage
-        function saveNotes() {
-            const notes = document.getElementById('personal-notes').value;
-            localStorage.setItem('osrs-player-notes', notes);
-            
-            const statusElement = document.getElementById('save-status');
-            statusElement.textContent = 'Notes saved successfully!';
-            statusElement.style.color = '#8b4513';
-            
-            setTimeout(() => {
-                statusElement.textContent = '';
-            }, 3000);
-        }
 
         function loadNotes() {
             const savedNotes = localStorage.getItem('osrs-player-notes');
@@ -5312,22 +5292,35 @@ if (typeof module !== 'undefined' && module.exports) {
         // Achievement Diary Functions
         let currentDiary = null;
 
-        function openDiary(diaryId) {
-            const diary = getDiaryById(diaryId);
-            if (!diary) return;
-
-            currentDiary = diaryId;
-            document.getElementById('diary-main-view').style.display = 'none';
-            document.getElementById('diary-detail-view').style.display = 'block';
-            document.getElementById('difficulty-detail-view').style.display = 'none';
-            document.getElementById('diary-title').textContent = diary.name;
-        }
 
         function closeDiary() {
-            document.getElementById('diary-detail-view').style.display = 'none';
-            document.getElementById('difficulty-detail-view').style.display = 'none';
-            document.getElementById('diary-main-view').style.display = 'block';
+            const detailView = document.getElementById('difficulty-detail-view');
+            const mainView = document.getElementById('diary-main-view');
+            
+            if (detailView) {
+                detailView.style.display = 'none';
+            }
+            if (mainView) {
+                mainView.style.display = 'block';
+            }
+            
             currentDiary = null;
+            populateDiaryTiles(); // Repopulate the diary list
+        }
+        
+        function backToDiary() {
+            const detailView = document.getElementById('difficulty-detail-view');
+            const mainView = document.getElementById('diary-main-view');
+            
+            if (detailView) {
+                detailView.style.display = 'none';
+            }
+            if (mainView) {
+                mainView.style.display = 'block';
+            }
+            
+            currentDiary = null;
+            populateDiaryTiles(); // Repopulate the diary list
         }
 
         function showDifficulty(difficulty) {
@@ -5337,7 +5330,7 @@ if (typeof module !== 'undefined' && module.exports) {
             const difficultyData = diary.difficulties[difficulty];
             if (!difficultyData) return;
 
-            document.getElementById('diary-detail-view').style.display = 'none';
+            document.getElementById('diary-main-view').style.display = 'none';
             document.getElementById('difficulty-detail-view').style.display = 'block';
             
             const title = `${diary.name} - ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`;
@@ -5371,10 +5364,6 @@ if (typeof module !== 'undefined' && module.exports) {
             loadTaskProgress(currentDiary, difficulty);
         }
 
-        function backToDiary() {
-            document.getElementById('difficulty-detail-view').style.display = 'none';
-            document.getElementById('diary-detail-view').style.display = 'block';
-        }
 
         // New functions for dynamic diary system
         function populateDiaryTiles() {
@@ -6619,6 +6608,8 @@ if (typeof module !== 'undefined' && module.exports) {
                     // Refresh displays
                     await populateGoalsList();
                     await updateRequirements();
+            await updateTaskSteps();
+                    await updateTaskSteps();
                     
                     console.log(`Loaded ${selectedIds.length} selected goals from Firestore`);
                 }
@@ -7344,6 +7335,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 
                 // Update requirements display
                 await updateRequirements();
+            await updateTaskSteps();
                 
                 console.log(`Loaded ${savedIds.length} saved goals from database`);
             } catch (error) {
@@ -7599,6 +7591,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 
                 // Update requirements display
                 await updateRequirements();
+            await updateTaskSteps();
                 
                 // Update task steps if this was a diary task
                 await updateTaskSteps();
@@ -7686,6 +7679,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 // Refresh all relevant UI components
                 await populateGoalsList();
                 await updateRequirements();
+            await updateTaskSteps();
                 await updateTaskSteps();
                 resetButtonState(goalId);
                 
@@ -7822,6 +7816,8 @@ if (typeof module !== 'undefined' && module.exports) {
                     
                     // Update requirements after adding goal
                     await updateRequirements();
+            await updateTaskSteps();
+                    await updateTaskSteps();
                     
                     // If this is a diary task, also add it to the Task Steps tab
                     if (type === 'diary') {
@@ -8363,6 +8359,7 @@ if (typeof module !== 'undefined' && module.exports) {
         async function manualUpdateRequirements() {
             console.log('Manually triggering requirements update...');
             await updateRequirements();
+            await updateTaskSteps();
         }
 
         // Force refresh masterGoalsList to pick up parsing fixes
@@ -8399,6 +8396,7 @@ if (typeof module !== 'undefined' && module.exports) {
             
             // Trigger requirements update
             await updateRequirements();
+            await updateTaskSteps();
         }
 
         // Expose functions to global scope for debugging
