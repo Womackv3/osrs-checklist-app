@@ -1912,3 +1912,12 @@ if (typeof module !== 'undefined' && module.exports) {
         formatMonsterDrops
     };
 }
+
+// Export for browser environment
+if (typeof window !== 'undefined') {
+    window.MONSTER_DATABASE = MONSTER_DATABASE;
+    window.getSlayerMonsters = getSlayerMonsters;
+    window.getMonsterById = getMonsterById;
+    window.formatMonsterDefenses = formatMonsterDefenses;
+    window.formatMonsterDrops = formatMonsterDrops;
+}

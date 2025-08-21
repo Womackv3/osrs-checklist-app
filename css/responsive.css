@@ -1,0 +1,311 @@
+/* Responsive Design */
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .journal-container {
+        padding: 20px;
+        max-width: 900px;
+    }
+    
+    .book-title {
+        font-size: 1.6em;
+    }
+    
+    .tab-navigation {
+        width: 50px;
+    }
+    
+    .tab-button, .tab-button-right {
+        font-size: 0.75em;
+        padding: 10px 4px;
+        min-height: 70px;
+    }
+    
+    .tab-content {
+        padding: 20px;
+        font-size: 0.9em;
+    }
+    
+    /* Quest and diary items */
+    .quest-item, .diary-item {
+        padding: 10px;
+        margin-bottom: 6px;
+    }
+    
+    .quest-info h3, .diary-info h3 {
+        font-size: 1.1em;
+    }
+    
+    .quest-info p, .diary-info p {
+        font-size: 0.85em;
+    }
+    
+    /* Buttons */
+    .add-to-todo-btn {
+        font-size: 0.7em;
+        padding: 4px 8px;
+        min-width: 80px;
+    }
+    
+    /* Modal adjustments */
+    .modal-content {
+        width: 90%;
+        max-width: 400px;
+        padding: 18px;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-button {
+        width: 100%;
+    }
+    
+    /* Universal tab content tablet adjustments */
+    .tab-content {
+        height: calc(100vh - 180px) !important;
+        min-height: 500px !important;
+    }
+    
+    /* Diary list tablet adjustments */
+    .diary-list {
+        max-height: 55vh !important;
+        min-height: 350px !important;
+    }
+    
+    /* Difficulty task list tablet adjustments */
+    .difficulty-requirements {
+        max-height: 55vh !important;
+    }
+    
+    .task-list {
+        max-height: calc(55vh - 180px) !important;
+    }
+}
+
+/* Mobile Landscape / Small Tablet */
+@media (min-width: 576px) and (max-width: 767px) {
+    .journal-container {
+        padding: 15px;
+    }
+    
+    .book-title {
+        font-size: 1.4em;
+    }
+    
+    .tab-navigation {
+        width: 45px;
+    }
+    
+    .tab-button, .tab-button-right {
+        font-size: 0.7em;
+        padding: 8px 4px;
+        min-height: 60px;
+    }
+    
+    .tab-content {
+        padding: 12px;
+        font-size: 0.85em;
+    }
+    
+    /* Quest and diary items */
+    .quest-item, .diary-item {
+        padding: 8px;
+        margin-bottom: 4px;
+    }
+    
+    .quest-info h3, .diary-info h3 {
+        font-size: 1em;
+    }
+    
+    .quest-info p, .diary-info p {
+        font-size: 0.8em;
+    }
+    
+    /* Buttons */
+    .add-to-todo-btn {
+        font-size: 0.65em;
+        padding: 3px 6px;
+        min-width: 70px;
+    }
+    
+    /* Modal adjustments */
+    .modal-content {
+        width: 95%;
+        max-width: 350px;
+        padding: 15px;
+    }
+    
+    .modal-title {
+        font-size: 1.3em;
+    }
+}
+
+/* Mobile Portrait */
+@media (max-width: 575px) {
+    .journal-container {
+        padding: 10px;
+    }
+    
+    .book-title {
+        font-size: 1.2em;
+    }
+    
+    .tab-navigation {
+        width: 40px;
+    }
+    
+    .tab-button, .tab-button-right {
+        font-size: 0.6em;
+        padding: 6px 2px;
+        min-height: 50px;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+    }
+    
+    .tab-content {
+        padding: 10px;
+        font-size: 0.8em;
+    }
+    
+    /* Quest and diary items */
+    .quest-item, .diary-item {
+        padding: 6px;
+        margin-bottom: 3px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .quest-info, .diary-info {
+        width: 100%;
+    }
+    
+    .quest-actions, .diary-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .quest-info h3, .diary-info h3 {
+        font-size: 0.9em;
+    }
+    
+    .quest-info p, .diary-info p {
+        font-size: 0.75em;
+        line-height: 1.3;
+    }
+    
+    /* Buttons */
+    .add-to-todo-btn {
+        font-size: 0.6em;
+        padding: 2px 4px;
+        min-width: 60px;
+    }
+    
+    .difficulty-badge {
+        font-size: 0.65em;
+        padding: 2px 6px;
+    }
+    
+    /* Modal adjustments */
+    .modal-content {
+        width: 98%;
+        max-width: 300px;
+        padding: 12px;
+        margin: 10px;
+    }
+    
+    .modal-title {
+        font-size: 1.2em;
+    }
+    
+    .modal-text {
+        font-size: 0.85em;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .modal-button {
+        width: 100%;
+        font-size: 0.8em;
+        padding: 8px;
+    }
+    
+    /* To-Do List adjustments */
+    .goal-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .goal-label {
+        font-size: 0.8em;
+        line-height: 1.3;
+    }
+    
+    .mark-complete-btn, .remove-goal-btn {
+        font-size: 0.6em !important;
+        padding: 1px 3px !important;
+    }
+    
+    /* Requirements display */
+    .requirements-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .requirement-section {
+        padding: 8px;
+    }
+    
+    .requirement-section h4 {
+        font-size: 0.9em;
+    }
+    
+    .item-list, .skill-list {
+        font-size: 0.75em;
+    }
+    
+    /* Universal tab content mobile adjustments */
+    .tab-content {
+        height: calc(100vh - 160px) !important;
+        min-height: 400px !important;
+    }
+    
+    /* Diary list mobile adjustments */
+    .diary-list {
+        max-height: 50vh !important;
+        min-height: 300px !important;
+    }
+    
+    .difficulty-item {
+        padding: 8px 15px !important;
+    }
+    
+    .difficulty-name {
+        font-size: 0.9em !important;
+    }
+    
+    .difficulty-progress {
+        font-size: 0.75em !important;
+    }
+    
+    /* Difficulty task list mobile adjustments */
+    .difficulty-requirements {
+        max-height: 50vh !important;
+        padding: 15px !important;
+    }
+    
+    .task-list {
+        max-height: calc(50vh - 150px) !important;
+    }
+    
+    .task-list li {
+        padding: 8px 10px !important;
+    }
+}

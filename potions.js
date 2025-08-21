@@ -664,3 +664,13 @@ if (typeof module !== 'undefined' && module.exports) {
         formatIngredients
     };
 }
+
+// Export for browser environment
+if (typeof window !== 'undefined') {
+    window.POTIONS_DATABASE = POTIONS_DATABASE;
+    window.getAllPotions = getAllPotions;
+    window.getPotionsByCategory = getPotionsByCategory;
+    window.getPotionById = getPotionById;
+    window.getPotionsByLevel = getPotionsByLevel;
+    window.formatIngredients = formatIngredients;
+}

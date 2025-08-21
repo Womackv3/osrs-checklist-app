@@ -492,3 +492,16 @@ if (typeof module !== 'undefined' && module.exports) {
         formatLocationRequirements
     };
 }
+
+// Export for browser environment
+if (typeof window !== 'undefined') {
+    window.LOCATIONS_DATABASE = LOCATIONS_DATABASE;
+    window.getAllLocations = getAllLocations;
+    window.getLocationById = getLocationById;
+    window.getLocationsByType = getLocationsByType;
+    window.getLocationsByRegion = getLocationsByRegion;
+    window.getSlayerLocations = getSlayerLocations;
+    window.getLocationsByMonster = getLocationsByMonster;
+    window.formatLocationTeleports = formatLocationTeleports;
+    window.formatLocationRequirements = formatLocationRequirements;
+}
