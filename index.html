@@ -31,6 +31,7 @@
     <script src="js/services/osrs-api.service.js"></script>
     <script src="js/components/diary.component.js"></script>
     <script src="js/components/quest.component.js"></script>
+    <script src="js/components/group-iron.component.js"></script>
     <script src="js/compatibility.js"></script>
     <script src="js/main.js"></script>
 </head>
@@ -167,11 +168,6 @@
                                             <p id="potion-experience"></p>
                                         </div>
                                         
-                                        <div class="potion-section">
-                                            <h4>💰 Profit/Loss per potion:</h4>
-                                            <p id="potion-profit"></p>
-                                        </div>
-                                        
                                         <div class="potion-calculator">
                                             <h4>📊 Calculator:</h4>
                                             <label for="potion-quantity">Number of potions to make:</label>
@@ -237,6 +233,7 @@
                     <button class="tab-button-right active" data-tab="stats">Stats</button>
                     <button class="tab-button-right" data-tab="quests">Quests</button>
                     <button class="tab-button-right" data-tab="diaries">Diaries</button>
+                    <button class="tab-button-right" data-tab="group-iron">Group Iron</button>
                 </div>
                 <div class="tab-content-area">
                     <!-- Stats Tab -->
@@ -530,6 +527,39 @@
                             <div id="difficulty-content" class="diary-detail-content">
                                 <!-- Difficulty details populated by JavaScript -->
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Group Iron Tab -->
+                    <div id="group-iron" class="tab-content">
+                        <h1>Group Iron Stats</h1>
+                        
+                        <!-- Group Lookup Section -->
+                        <div class="group-lookup-section">
+                            <div class="lookup-form">
+                                <input type="text" id="group-name-input" class="username-input" placeholder="Enter group name..." maxlength="50" onkeypress="handleGroupLookupEnter(event)">
+                                <button id="group-lookup-btn" onclick="lookupGroupStats()">Search Group</button>
+                            </div>
+                        </div>
+
+                        <!-- Group Stats Display -->
+                        <div id="group-stats-container" class="group-stats-container" style="display: none;">
+                            <!-- Group header will be populated here -->
+                            <div id="group-header" class="group-header"></div>
+                            
+                            <!-- Group members will be populated here -->
+                            <div id="group-members" class="group-members"></div>
+                        </div>
+                        
+                        <!-- Loading state -->
+                        <div id="group-loading" class="loading-state" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <p>Loading group information...</p>
+                        </div>
+                        
+                        <!-- Error state -->
+                        <div id="group-error" class="error-state" style="display: none;">
+                            <p>Group not found or an error occurred. Please check the group name and try again.</p>
                         </div>
                     </div>
                 </div>

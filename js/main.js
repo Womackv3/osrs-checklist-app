@@ -350,6 +350,11 @@ class OSRSIronBible {
                 await this.services.osrsApi.loadSavedPlayerStats();
             }
             
+            // Load saved group iron stats
+            if (window.groupIronComponent) {
+                await window.groupIronComponent.loadSavedGroupIronStats();
+            }
+            
             console.log('✅ Saved data loaded');
             
         } catch (error) {
