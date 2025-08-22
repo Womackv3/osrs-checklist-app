@@ -230,72 +230,40 @@ class OSRSApiService {
                 members: []
             };
 
-            // Look for the main group table containing player data
-            const tables = doc.querySelectorAll('table');
-            let membersFound = false;
-
-            // Try to find tables containing player data with skill information
-            tables.forEach(table => {
-                const rows = table.querySelectorAll('tr');
-                
-                rows.forEach(row => {
-                    const cells = row.querySelectorAll('td');
+            // Find all player rows first
+            const playerRows = doc.querySelectorAll('tr.uc-scroll__table-row--type-player');
+            
+            playerRows.forEach(playerRow => {
+                const playerLink = playerRow.querySelector('a[href*="hiscorepersonal"]');
+                if (playerLink) {
+                    // Extract player name and total level
+                    const rawPlayerName = playerLink.textContent.trim();
+                    const cleanPlayerName = rawPlayerName.replace(/&nbsp;/g, ' ').trim();
                     
-                    // Look for rows that contain player links
-                    const playerLink = row.querySelector('a[href*="hiscorepersonal"]');
-                    if (playerLink) {
-                        // Fix character encoding issues in player names
-                        const rawPlayerName = playerLink.textContent.trim();
-                        const cleanPlayerName = rawPlayerName.replace(/[^\w\s-]/g, '_').trim();
-                        
-                        if (cleanPlayerName) {
-                            // Extract all skill data from the table row
-                            const memberData = {
-                                name: cleanPlayerName,
-                                originalName: rawPlayerName,
-                                totalLevel: '0',
-                                totalXp: '0',
-                                skills: this.parseSkillsFromTableRow(cells)
-                            };
-                            
-                            // Try to extract total level from visible data
-                            if (cells.length >= 2) {
-                                const totalLevelText = cells[1]?.textContent?.trim()?.replace(/,/g, '');
-                                if (totalLevelText && !isNaN(totalLevelText)) {
-                                    memberData.totalLevel = totalLevelText;
-                                }
-                            }
-                            
-                            groupData.members.push(memberData);
-                            membersFound = true;
-                            console.log(`Found member: ${cleanPlayerName} (Total Level: ${memberData.totalLevel})`);
-                        }
+                    const cells = playerRow.querySelectorAll('td');
+                    let totalLevel = '0';
+                    let totalXp = '0';
+                    
+                    if (cells.length >= 3) {
+                        totalLevel = cells[1]?.textContent?.trim()?.replace(/,/g, '') || '0';
+                        totalXp = cells[2]?.textContent?.trim()?.replace(/,/g, '') || '0';
                     }
-                });
+                    
+                    // Find all skill rows for this player
+                    const memberSkills = this.parsePlayerSkills(doc, cleanPlayerName, rawPlayerName);
+                    
+                    const memberData = {
+                        name: cleanPlayerName,
+                        originalName: rawPlayerName,
+                        totalLevel: totalLevel,
+                        totalXp: totalXp,
+                        skills: memberSkills
+                    };
+                    
+                    groupData.members.push(memberData);
+                    console.log(`Found member: ${cleanPlayerName} (Total Level: ${totalLevel})`);
+                }
             });
-
-            // Fallback: If no table structure worked, try to find player links and generate basic data
-            if (!membersFound) {
-                const playerLinks = doc.querySelectorAll('a[href*="hiscorepersonal"]');
-                
-                playerLinks.forEach(link => {
-                    const rawPlayerName = link.textContent.trim();
-                    const cleanPlayerName = rawPlayerName.replace(/[^\w\s-]/g, '_').trim();
-                    
-                    if (cleanPlayerName) {
-                        const memberData = {
-                            name: cleanPlayerName,
-                            originalName: rawPlayerName,
-                            totalLevel: '276', // Default total level for ironman
-                            totalXp: '0',
-                            skills: this.generateBasicSkillsData('276')
-                        };
-                        
-                        groupData.members.push(memberData);
-                        console.log(`Found member (fallback): ${cleanPlayerName}`);
-                    }
-                });
-            }
 
             console.log(`Parsed ${groupData.members.length} members from group: ${groupName}`);
             return groupData;
@@ -304,25 +272,47 @@ class OSRSApiService {
         }
     }
 
-    parseSkillsFromTableRow(cells) {
-        // Generate skill data structure with all OSRS skills
+    parsePlayerSkills(doc, cleanPlayerName, rawPlayerName) {
         const skills = {};
         
+        // Initialize all skills with default values
         this.skillNames.forEach(skillName => {
             if (skillName === 'overall') {
-                skills[skillName] = {
-                    rank: -1,
-                    level: 276, // Default total level
-                    xp: 0
-                };
+                skills[skillName] = { rank: -1, level: 0, xp: 0 };
             } else {
-                // Default skill levels for ironman accounts
                 const level = skillName === 'hitpoints' ? 10 : 1;
                 skills[skillName] = {
                     rank: -1,
                     level: level,
                     xp: skillName === 'hitpoints' ? 1154 : 0
                 };
+            }
+        });
+        
+        // Find skill rows for this specific player
+        const skillRows = doc.querySelectorAll(`tr[data-js-skill-row-memberid="${rawPlayerName}"]`);
+        
+        skillRows.forEach(skillRow => {
+            const skillIcon = skillRow.querySelector('.ua-skill-icon');
+            if (skillIcon) {
+                // Extract skill name from class
+                const skillClasses = skillIcon.className;
+                const skillMatch = skillClasses.match(/ua-skill-icon--(\w+)/);
+                
+                if (skillMatch) {
+                    const skillName = skillMatch[1];
+                    const cells = skillRow.querySelectorAll('td');
+                    
+                    if (cells.length >= 3) {
+                        const level = parseInt(cells[1]?.textContent?.trim()) || 1;
+                        const xp = parseInt(cells[2]?.textContent?.trim()?.replace(/,/g, '')) || 0;
+                        
+                        if (skills[skillName]) {
+                            skills[skillName].level = level;
+                            skills[skillName].xp = xp;
+                        }
+                    }
+                }
             }
         });
         
