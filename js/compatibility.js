@@ -462,6 +462,19 @@ function getCurrentSkillLevel(skillName) {
         return window.osrsApiService.currentPlayerStats[skillName].level;
     }
     
+    // Check for Group Iron stats - use the highest level among group members
+    if (window.currentGroupData && window.currentGroupData.members) {
+        let highestLevel = 1;
+        window.currentGroupData.members.forEach(member => {
+            if (member.skills && member.skills[skillName] && member.skills[skillName].level) {
+                highestLevel = Math.max(highestLevel, member.skills[skillName].level);
+            }
+        });
+        if (highestLevel > 1) {
+            return highestLevel;
+        }
+    }
+    
     // Default to 1 if no stats available
     return 1;
 }
