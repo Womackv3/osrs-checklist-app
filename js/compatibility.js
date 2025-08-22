@@ -49,7 +49,7 @@ function validateGroupName(groupName) {
 
 // Goal management functions
 async function populateGoalsList() {
-    const container = document.getElementById('master-goals-list');
+    const container = DOMCache.masterGoalsList || DOMCache.get('master-goals-list');
     if (!container) return;
     
     if (window.masterGoalsList.length === 0) {
@@ -113,7 +113,7 @@ async function populateGoalsList() {
 }
 
 async function updateRequirements() {
-    const skillRequirementsContainer = document.getElementById('skill-requirements');
+    const skillRequirementsContainer = DOMCache.skillRequirements || DOMCache.get('skill-requirements');
     if (!skillRequirementsContainer) return;
     
     const requirementsGrid = skillRequirementsContainer.querySelector('.requirements-grid');
@@ -204,7 +204,6 @@ async function updateRequirements() {
     });
     
     requirementsGrid.innerHTML = html;
-    console.log(`Updated skill requirements: ${Object.keys(skillRequirements).length} skills`);
 }
 
 async function updateTaskSteps() {
@@ -280,7 +279,6 @@ async function updateTaskSteps() {
     });
     
     taskStepsContainer.innerHTML = html;
-    console.log(`Updated task steps: ${diaryTasks.length} diary tasks`);
 }
 
 function toggleGoalComplete(goalId, skipSync = false) {
@@ -293,7 +291,6 @@ function toggleGoalComplete(goalId, skipSync = false) {
             // Mark quest as completed in quest component
             const questStorageKey = `quest_${goal.originalId}_completed`;
             localStorage.setItem(questStorageKey, 'true');
-            console.log(`Marked quest ${goal.originalId} as completed`);
             
             // Update quest visual state if quest component is available
             if (window.questComponent && window.questComponent.updateQuestItemVisualState) {
@@ -303,7 +300,6 @@ function toggleGoalComplete(goalId, skipSync = false) {
             // Mark diary task as completed in diary component
             const diaryStorageKey = `diary_${goal.originalId}_${goal.difficulty}_${goal.taskIndex}`;
             localStorage.setItem(diaryStorageKey, 'true');
-            console.log(`Marked diary task ${goal.originalId}_${goal.difficulty}_${goal.taskIndex} as completed`);
             
             // Update diary visual state if diary component is available
             if (window.diaryComponent && window.diaryComponent.updateDiaryTaskVisualState) {
@@ -322,7 +318,6 @@ function toggleGoalComplete(goalId, skipSync = false) {
     if (goalIndex !== -1) {
         window.masterGoalsList.splice(goalIndex, 1);
         window.goalLookupMap.delete(goalId);
-        console.log(`Removed completed goal: ${goal.title}`);
     }
     
     // Delete from Firestore if available
@@ -374,10 +369,22 @@ function rebuildGoalLookupMap() {
 // Save goals to localStorage as fallback when user not authenticated
 function saveGoalsToLocalStorage() {
     try {
-        localStorage.setItem('osrs-todo-goals', JSON.stringify(window.masterGoalsList));
-        console.log(`Saved ${window.masterGoalsList.length} goals to localStorage`);
+        const goalsData = JSON.stringify(window.masterGoalsList);
+        localStorage.setItem('osrs-todo-goals', goalsData);
     } catch (error) {
-        console.warn('Failed to save goals to localStorage:', error);
+        console.warn('Failed to save goals to localStorage. This may be due to browser storage limits or privacy settings:', error.message);
+        // Fallback: try to save a simplified version
+        try {
+            const simplifiedGoals = window.masterGoalsList.map(goal => ({
+                id: goal.id,
+                title: goal.title,
+                type: goal.type,
+                completed: goal.completed
+            }));
+            localStorage.setItem('osrs-todo-goals-simple', JSON.stringify(simplifiedGoals));
+        } catch (fallbackError) {
+            console.error('Critical: Unable to save goals data anywhere:', fallbackError.message);
+        }
     }
 }
 
@@ -450,6 +457,52 @@ function setupRealtimeSync() {
 // Modal data storage
 let currentModalData = null;
 
+// DOM element cache for performance
+const DOMCache = {
+    // Goals and requirements
+    masterGoalsList: null,
+    skillRequirements: null,
+    taskStepsList: null,
+    todoModal: null,
+    
+    // Modal elements
+    modalItemName: null,
+    modalItemDescription: null,
+    modalItemDetails: null,
+    skillLevelInput: null,
+    targetLevelInput: null,
+    currentLevelSpan: null,
+    
+    // Monster elements
+    monsterSelector: null,
+    monsterInfo: null,
+    monsterPlaceholder: null,
+    
+    // Potion elements
+    potionSelector: null,
+    potionInfo: null,
+    potionPlaceholder: null,
+    
+    // Cache getter with lazy loading
+    get(elementId) {
+        if (!this[elementId]) {
+            this[elementId] = document.getElementById(elementId);
+        }
+        return this[elementId];
+    },
+    
+    // Initialize commonly used elements
+    init() {
+        this.masterGoalsList = document.getElementById('master-goals-list');
+        this.skillRequirements = document.getElementById('skill-requirements');
+        this.taskStepsList = document.getElementById('task-steps-list');
+        this.todoModal = document.getElementById('todo-modal');
+        this.modalItemName = document.getElementById('modal-item-name');
+        this.modalItemDescription = document.getElementById('modal-item-description');
+        this.modalItemDetails = document.getElementById('modal-item-details');
+    }
+};
+
 // Helper function to get current skill level from player stats
 function getCurrentSkillLevel(skillName) {
     // Check if we have current player stats
@@ -481,15 +534,20 @@ function getCurrentSkillLevel(skillName) {
 
 // Modal functions
 function openTodoModal(type, itemId, difficulty = null, taskIndex = null) {
-    const modal = document.getElementById('todo-modal');
-    const nameElement = document.getElementById('modal-item-name');
-    const descElement = document.getElementById('modal-item-description');
-    const detailsElement = document.getElementById('modal-item-details');
-
-    // Store current data for confirmation
-    currentModalData = { type, itemId, difficulty, taskIndex };
-
     try {
+        const modal = DOMCache.todoModal || DOMCache.get('todo-modal');
+        const nameElement = DOMCache.modalItemName || DOMCache.get('modal-item-name');
+        const descElement = DOMCache.modalItemDescription || DOMCache.get('modal-item-description');
+        const detailsElement = DOMCache.modalItemDetails || DOMCache.get('modal-item-details');
+        
+        // Validate required DOM elements
+        if (!modal || !nameElement || !descElement || !detailsElement) {
+            throw new Error('Required modal elements not found in DOM');
+        }
+
+        // Store current data for confirmation
+        currentModalData = { type, itemId, difficulty, taskIndex };
+
         if (type === 'quest') {
             const quest = window.QUESTS_DATABASE ? window.QUESTS_DATABASE[itemId] : null;
             if (quest) {
@@ -1085,7 +1143,8 @@ function setupNotesAutoSave() {
 
 // Initialize compatibility layer when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🔧 Initializing compatibility layer...');
+    // Initialize DOM element cache for performance
+    DOMCache.init();
     
     // Set up notes auto-save
     setupNotesAutoSave();

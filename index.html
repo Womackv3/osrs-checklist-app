@@ -21,9 +21,9 @@
     <!-- Game Data -->
     <script src="data/quests.js"></script>
     <script src="data/diaries.js"></script>
-    <script src="monsters.js?v=2.1"></script>
-    <script src="potions.js"></script>
-    <script src="locations.js"></script>
+    <script src="data/monsters.js?v=2.1"></script>
+    <script src="data/potions.js"></script>
+    <script src="data/locations.js"></script>
     
     <!-- Application Modules -->
     <script src="js/config/firebase.js"></script>
@@ -32,6 +32,11 @@
     <script src="js/components/diary.component.js"></script>
     <script src="js/components/quest.component.js"></script>
     <script src="js/components/group-iron.component.js"></script>
+    <!-- Collection Log Components (for Player Stats summary) -->
+    <script src="js/components/collection-log-api.service.js"></script>
+    <script src="js/components/collection-log-renderer.component.js"></script>
+    <!-- Unified Player Data Service (loads after collection log components) -->
+    <script src="js/services/player-data.service.js"></script>
     <script src="js/compatibility.js"></script>
     <script src="js/main.js"></script>
 </head>
@@ -244,6 +249,21 @@
                             <div class="lookup-form">
                                 <input type="text" id="username-input" placeholder="Enter OSRS username" class="username-input" maxlength="12">
                                 <button id="lookup-btn" onclick="lookupPlayer()">Lookup Player</button>
+                            </div>
+                        </div>
+
+                        <!-- Collection Log Summary -->
+                        <div id="player-collection-summary" class="collection-header" style="display: none;">
+                            <h2 id="player-collection-title">Collection Log</h2>
+                            <div class="collection-stats">
+                                <div class="collection-stat-item">
+                                    <div class="collection-stat-label">Total Items</div>
+                                    <div class="collection-stat-value" id="player-collection-items">0/1608</div>
+                                </div>
+                                <div class="collection-stat-item">
+                                    <div class="collection-stat-label">Completion</div>
+                                    <div class="collection-stat-value" id="player-collection-percentage">0%</div>
+                                </div>
                             </div>
                         </div>
 
@@ -562,6 +582,7 @@
                             <p>Group not found or an error occurred. Please check the group name and try again.</p>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
